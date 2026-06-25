@@ -1,0 +1,127 @@
+<?php
+
+/*
+ * Archivo: public/index.php
+ * Autor:   C3r0d4y
+ *
+ * Front Controller de ARCANUM. Aplica cabeceras de seguridad HTTP,
+ * endurece la sesión y despacha cada petición al controlador correcto.
+ */
+
+declare(strict_types=1);
+
+ini_set('pcre.jit', '0');
+
+/* ── Cabeceras de seguridad HTTP ── */
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: no-referrer');
+header('Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()');
+header("Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; object-src 'self'; frame-src 'self'; img-src 'self' data:;");
+
+/* ── Endurecimiento de sesión ── */
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Strict');
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+
+/* ── Carga base ── */
+require_once __DIR__ . '/../config/config.php';
+require_once APP_ROOT . '/app/core/helpers.php';
+require_once APP_ROOT . '/app/core/Database.php';
+require_once APP_ROOT . '/app/core/Crypto.php';
+require_once APP_ROOT . '/app/core/Auth.php';
+require_once APP_ROOT . '/app/core/Csrf.php';
+require_once APP_ROOT . '/app/core/Logger.php';
+require_once APP_ROOT . '/app/core/Controller.php';
+
+/* ── Autocarga de controladores y modelos ── */
+spl_autoload_register(static function (string $class): void {
+    foreach (['controllers', 'models'] as $folder) {
+        $path = APP_ROOT . "/app/{$folder}/{$class}.php";
+        if (is_file($path)) {
+            require_once $path;
+            return;
+        }
+    }
+});
+
+/* ── Sesión segura con nombre único ── */
+session_name('arcanum_session');
+session_start();
+
+/* ── Lectura y normalización de la ruta ── */
+$route = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?? '', '/');
+$base  = trim(BASE_URL, '/');
+
+if ($base !== '' && str_starts_with($route, $base)) {
+    $route = trim(substr($route, strlen($base)), '/');
+}
+
+$route  = $route === 'public' ? '' : preg_replace('#^public/?#', '', $route);
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+/* ── Tabla de rutas estáticas ── */
+$routes = [
+    'GET' => [
+        ''                 => [DocumentsController::class, 'index'],
+        'login'            => [AuthController::class,      'showLogin'],
+        'logout'           => [AuthController::class,      'logout'],
+        'documents'        => [DocumentsController::class, 'index'],
+        'documents/create' => [DocumentsController::class, 'create'],
+        'users'            => [UsersController::class,     'index'],
+        'users/create'     => [UsersController::class,     'create'],
+        'logs'             => [LogsController::class,      'index'],
+    ],
+    'POST' => [
+        'login'            => [AuthController::class,      'login'],
+        'documents/store'  => [DocumentsController::class, 'store'],
+        'users/store'      => [UsersController::class,     'store'],
+    ],
+];
+
+/* ── Rutas dinámicas con ID ── */
+if (preg_match('#^documents/(\d+)$#', $route, $m) && $method === 'GET') {
+    [new DocumentsController(), 'show']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^documents/(\d+)/edit$#', $route, $m) && $method === 'GET') {
+    [new DocumentsController(), 'edit']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^documents/(\d+)/update$#', $route, $m) && $method === 'POST') {
+    [new DocumentsController(), 'update']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^documents/(\d+)/delete$#', $route, $m) && $method === 'POST') {
+    [new DocumentsController(), 'delete']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^documents/(\d+)/file$#', $route, $m) && $method === 'GET') {
+    [new DocumentsController(), 'file']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^users/(\d+)/edit$#', $route, $m) && $method === 'GET') {
+    [new UsersController(), 'edit']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^users/(\d+)/update$#', $route, $m) && $method === 'POST') {
+    [new UsersController(), 'update']((int) $m[1]);
+    exit;
+}
+if (preg_match('#^users/(\d+)/delete$#', $route, $m) && $method === 'POST') {
+    [new UsersController(), 'delete']((int) $m[1]);
+    exit;
+}
+
+/* ── Despacho de rutas estáticas ── */
+$handler = $routes[$method][$route] ?? null;
+if ($handler === null) {
+    http_response_code(404);
+    (new Controller())->view('errors/404');
+    exit;
+}
+
+[$controller, $action] = $handler;
+[new $controller(), $action]();
