@@ -43,8 +43,6 @@ $description = e('Sistema cifrado de gestión de expedientes clasificados. Acces
     <link rel="apple-touch-icon" href="<?= e(url('assets/img/icon.png')) ?>">
     <link rel="preload" as="image" href="<?= e(url('assets/img/logo.webp')) ?>" type="image/webp">
     <link rel="stylesheet" href="<?= e(url('assets/css/app.min.css')) ?>?v=<?= filemtime(APP_ROOT . '/public/assets/css/app.min.css') ?>">
-    <!-- URL base de la app: el JavaScript la usa para armar rutas correctamente -->
-    <meta name="base-url" content="<?= e(url('')) ?>">
     <?php if (Auth::check()): ?>
     <meta name="csrf-token" content="<?= e(Csrf::token()) ?>">
     <?php endif; ?>

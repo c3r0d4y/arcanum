@@ -20,73 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ── Utilidades ── */
 
-    /* URL base de la aplicación, publicada por el servidor en una meta
-       etiqueta; así las rutas funcionan sin importar la carpeta de
-       instalación (arcanum, arcanum_demo, etc.) */
-    const BASE_URL = (document.querySelector('meta[name="base-url"]')?.content || '/')
-        .replace(/\/+$/, '') + '/';
-
-    /* URL del endpoint de verificación de PIN */
-    const PIN_VERIFY_URL = BASE_URL + 'pin/verify';
+    /* URL base para el endpoint de verificación de PIN */
+    const PIN_VERIFY_URL = (function () {
+        const base = document.querySelector('base')?.href ||
+            window.location.origin + (window.location.pathname.split('/').slice(0, -1).join('/'));
+        // Construye la URL tomando el origen + la ruta hasta /arcanum/
+        const m = window.location.pathname.match(/^(\/arcanum\/?)/);
+        return window.location.origin + (m ? m[1] : '/') + 'pin/verify';
+    })();
 
     /* Lee el token CSRF de la meta etiqueta */
     function csrfToken() {
         return document.querySelector('meta[name="csrf-token"]')?.content || '';
     }
-
-    /* ── VERSIÓN DEMO: bloqueo de acciones que escriben en la base ──
-     *
-     * La interfaz se conserva idéntica a la original: todos los botones
-     * de crear, editar y eliminar siguen visibles. Pero al enviar un
-     * formulario que modificaría la base de datos, se muestra el aviso
-     * de VERSIÓN DEMO y la petición nunca sale del navegador.
-     * (El servidor tiene su propia barrera por si se evita esta.)
-     */
-    const modalDemo = document.getElementById('modal-demo');
-    const demoOk    = document.getElementById('demo-ok');
-
-    /* Muestra el aviso de solo lectura */
-    function showDemoModal() {
-        if (!modalDemo) {
-            window.alert('Versión DEMO, no puede realizar cambios.');
-            return;
-        }
-        modalDemo.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-
-        function cerrar() {
-            modalDemo.style.display = 'none';
-            document.body.style.overflow = '';
-            if (demoOk) { demoOk.removeEventListener('click', cerrar); }
-            modalDemo.removeEventListener('click', fondo);
-            document.removeEventListener('keydown', escape);
-        }
-        function fondo(e)  { if (e.target === modalDemo) cerrar(); }
-        function escape(e) { if (e.key === 'Escape') cerrar(); }
-
-        if (demoOk) { demoOk.addEventListener('click', cerrar); }
-        modalDemo.addEventListener('click', fondo);
-        document.addEventListener('keydown', escape);
-    }
-
-    /* Rutas que implican escritura en la base de datos.
-       Se permiten login, login/pin y pin/verify para poder navegar. */
-    const DEMO_RUTAS_BLOQUEADAS =
-        /\/(store|update|delete|unlock)$|\/profile\/(password|pin|avatar)$/;
-
-    /* Fase de captura: este manejador corre ANTES que los de
-       confirmación y PIN, de modo que el clic muestra el aviso
-       de inmediato y ningún otro flujo continúa. */
-    document.addEventListener('submit', (e) => {
-        const form   = e.target;
-        const accion = (form.getAttribute('action') || window.location.pathname)
-            .split('?')[0];
-        if (DEMO_RUTAS_BLOQUEADAS.test(accion)) {
-            e.preventDefault();
-            e.stopPropagation();
-            showDemoModal();
-        }
-    }, true);
 
     /* ── Modal de confirmación (reutilizable) ── */
     const modalConfirm       = document.getElementById('modal-confirm');
@@ -175,12 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
                        la sesión; se muestra el aviso y se regresa al login */
                     mostrarError(data.error || 'Cuenta bloqueada. Sesión cerrada.');
                     setTimeout(function () {
-                        window.location.href = BASE_URL + 'login';
+                        window.location.href = window.location.origin +
+                            (window.location.pathname.match(/^(\/arcanum\/?)/)?.[1] || '/') + 'login';
                     }, 2500);
                 } else if (data.setup) {
                     /* PIN no configurado: ir a perfil */
                     cerrar();
-                    window.location.href = BASE_URL + 'profile';
+                    window.location.href = window.location.origin +
+                        window.location.pathname.match(/^(\/arcanum\/?)/)?.[1] + 'profile';
                 } else {
                     mostrarError(data.error || 'PIN incorrecto.');
                     if (pinInput) { pinInput.value = ''; pinInput.focus(); }

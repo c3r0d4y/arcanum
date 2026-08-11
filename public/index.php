@@ -62,39 +62,6 @@ if ($base !== '' && str_starts_with($route, $base)) {
 $route  = $route === 'public' ? '' : preg_replace('#^public/?#', '', $route);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-/* ── Guardián de VERSIÓN DEMO ──
- * Bloquea en el servidor toda petición que modifique la base de datos.
- * Solo se permiten el inicio de sesión, el PIN de acceso y la
- * verificación de PIN, para que se pueda navegar por toda la app.
- * Es la segunda barrera: aunque alguien evite el aviso del navegador,
- * el servidor nunca ejecutará la operación. */
-if (DEMO_MODE && $method === 'POST') {
-    $rutasPermitidas = ['login', 'login/pin', 'pin/verify'];
-
-    if (!in_array($route, $rutasPermitidas, true)) {
-        // Peticiones AJAX reciben JSON; las demás, aviso y regreso
-        $esAjax = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest'
-            || str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
-
-        if ($esAjax) {
-            http_response_code(403);
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['ok' => false, 'demo' => true, 'error' => DEMO_MESSAGE]);
-        } else {
-            flash('error', DEMO_MESSAGE);
-            // Regresa a la página anterior solo si pertenece a este sitio
-            $referer = $_SERVER['HTTP_REFERER'] ?? '';
-            $host    = $_SERVER['HTTP_HOST'] ?? '';
-            if ($referer !== '' && parse_url($referer, PHP_URL_HOST) === $host) {
-                header('Location: ' . $referer);
-            } else {
-                header('Location: ' . url(''));
-            }
-        }
-        exit;
-    }
-}
-
 /* ── Tabla de rutas estáticas ── */
 $routes = [
     'GET' => [

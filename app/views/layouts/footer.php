@@ -926,38 +926,6 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════
-     MODAL: Aviso de VERSIÓN DEMO (solo lectura)
-     Se muestra al intentar crear, editar o eliminar registros.
-     ══════════════════════════════════════════════════════ -->
-<div id="modal-demo" style="display:none;position:fixed;inset:0;z-index:10002;background:rgba(0,0,0,.9);backdrop-filter:blur(5px);align-items:center;justify-content:center">
-    <div style="max-width:420px;width:calc(100% - 32px);background:#0a0e1a;border:1px solid rgba(184,147,90,.5);box-shadow:0 0 80px rgba(0,0,0,.95)">
-
-        <!-- Cabecera del modal -->
-        <div style="display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(0,0,0,.5);border-bottom:1px solid rgba(184,147,90,.25)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b8935a" stroke-width="2" stroke-linecap="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            <span style="font:700 11px/1 ui-monospace,monospace;letter-spacing:.18em;text-transform:uppercase;color:#b8935a">VERSIÓN DEMO</span>
-        </div>
-
-        <!-- Mensaje y botón -->
-        <div style="padding:24px 20px">
-            <p style="font:13px/1.75 ui-monospace,monospace;color:#8aa4c0;margin:0 0 8px;word-break:break-word">
-                Versión DEMO, no puede realizar cambios.
-            </p>
-            <p style="font:11px/1.6 ui-monospace,monospace;color:#3a4a60;margin:0 0 24px">
-                Puede navegar libremente por todo el sistema, pero las operaciones de crear, editar y eliminar están deshabilitadas.
-            </p>
-            <div style="display:flex;justify-content:flex-end">
-                <button id="demo-ok" style="background:rgba(184,147,90,.15);border:1px solid rgba(184,147,90,.55);color:#b8935a;cursor:pointer;padding:10px 28px;font:700 10px/1 ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;transition:background .15s">ENTENDIDO</button>
-            </div>
-        </div>
-
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
      MODAL: Aviso de cierre de sesión por inactividad
      ══════════════════════════════════════════════════════ -->
 <?php if (Auth::check()): ?>

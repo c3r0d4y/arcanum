@@ -17,7 +17,7 @@ declare(strict_types=1);
 define('APP_NAME', 'ARCANUM');
 
 // URL base de instalación
-define('BASE_URL', '/arcanum_demo');
+define('BASE_URL', '/arcanum');
 
 // Raíz absoluta del proyecto
 define('APP_ROOT', dirname(__DIR__));
@@ -54,17 +54,5 @@ unset($secretos, $rutaSecretos);
 
 // Tiempo máximo de inactividad antes de cerrar la sesión (en segundos)
 define('SESSION_TIMEOUT', 300); // 5 minutos
-
-/*
- * Modo VERSIÓN DEMO (solo lectura).
- * Cuando está activo, el servidor rechaza cualquier operación que
- * modifique la base de datos (crear, editar, eliminar, desbloquear,
- * cambiar contraseña/PIN/foto). El inicio de sesión y la verificación
- * de PIN siguen funcionando para poder navegar por toda la aplicación.
- */
-define('DEMO_MODE', true);
-
-// Mensaje que se muestra al usuario cuando intenta guardar cambios
-define('DEMO_MESSAGE', 'Versión DEMO: no puede realizar cambios.');
 
 date_default_timezone_set('America/Mexico_City');
