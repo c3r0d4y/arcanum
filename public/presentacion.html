@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARCANUM — Presentación de Producto</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #06090f;
+    --surface:  #0b0f18;
+    --surface2: #0d1220;
+    --border:   rgba(255,255,255,.07);
+    --line2:    rgba(255,255,255,.05);
+    --accent:   #4a82be;
+    --gold:     #b8935a;
+    --gold2:    #d4a843;
+    --green:    #4ade80;
+    --danger:   #c03b2b;
+    --text:     #dde1eb;
+    --sub:      #7a8499;
+    --muted:    #3e4660;
+    --font:     'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono:     ui-monospace, 'Cascadia Code', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Barra táctica superior (igual que en la app) ── */
+  #statusbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 200;
+    height: 28px;
+    background: #030508;
+    border-bottom: 1px solid rgba(74,130,190,.18);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font: 700 9.5px/1 var(--mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  .sb-left { display: flex; align-items: center; gap: 14px; }
+  .sb-right { display: flex; align-items: center; gap: 14px; color: var(--sub); }
+
+  .pill-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--sub);
+  }
+
+  .pill-stat .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: blink 2s infinite;
+  }
+
+  .pill-stat.blue  { color: var(--accent); }
+  .pill-stat.gold  { color: var(--gold2); }
+  .pill-stat.green { color: var(--green); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  /* ── Navegación ── */
+  #nav {
+    position: fixed;
+    top: 28px; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(6,9,15,.94);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 50px;
+  }
+
+  .nav-brand {
+    font-family: var(--mono);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: .1em;
+    color: var(--text);
+  }
+
+  .nav-brand span { color: var(--accent); }
+  .nav-brand small { color: var(--sub); font-size: 9px; font-weight: 400; letter-spacing: .06em; margin-left: 8px; }
+
+  .nav-pills {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+  }
+
+  .nav-pills li a {
+    display: block;
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--sub);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all .2s;
+    font-family: var(--mono);
+    letter-spacing: .04em;
+  }
+
+  .nav-pills li a:hover,
+  .nav-pills li a.active {
+    color: var(--accent);
+    border-color: rgba(74,130,190,.3);
+    background: rgba(74,130,190,.07);
+  }
+
+  /* ── Slides ── */
+  .slide {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 108px 24px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide-alt { background: var(--surface); }
+  .slide-alt2 { background: var(--surface2); }
+
+  .slide-inner {
+    width: 100%;
+    max-width: 920px;
+  }
+
+  /* ── Línea de sección ── */
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::before {
+    content: '//';
+    color: var(--muted);
+  }
+
+  .eyebrow.gold { color: var(--gold2); }
+
+  /* ── Tipografía ── */
+  h1 {
+    font-size: clamp(2.6rem, 6vw, 4.6rem);
+    font-weight: 800;
+    line-height: 1.04;
+    letter-spacing: -.03em;
+    margin-bottom: 24px;
+  }
+
+  h1 em { color: var(--accent); font-style: normal; }
+
+  h2 {
+    font-size: clamp(1.6rem, 4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.12;
+    margin-bottom: 20px;
+  }
+
+  h2 em { color: var(--accent); font-style: normal; }
+  h2 em.gold { color: var(--gold2); }
+
+  h3 {
+    font-size: .98rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  p {
+    color: var(--sub);
+    font-size: 1rem;
+    max-width: 660px;
+    margin-bottom: 14px;
+  }
+
+  p.wide { max-width: 100%; }
+
+  strong { color: var(--text); }
+
+  code {
+    font-family: var(--mono);
+    font-size: .85em;
+    background: rgba(74,130,190,.1);
+    border: 1px solid rgba(74,130,190,.2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--accent);
+  }
+
+  /* ── Cards ── */
+  .grid {
+    display: grid;
+    gap: 12px;
+    margin-top: 26px;
+  }
+
+  .grid-2 { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+  .grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .grid-4 { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+  .card {
+    background: rgba(255,255,255,.025);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    transition: border-color .2s, background .2s;
+  }
+
+  .card:hover {
+    border-color: rgba(74,130,190,.3);
+    background: rgba(74,130,190,.035);
+  }
+
+  .card-icon {
+    width: 34px; height: 34px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 11px;
+    font-size: 16px;
+  }
+
+  .ci-blue  { background: rgba(74,130,190,.1);  color: var(--accent); border: 1px solid rgba(74,130,190,.22); }
+  .ci-gold  { background: rgba(212,168,67,.08); color: var(--gold2);  border: 1px solid rgba(212,168,67,.2); }
+  .ci-green { background: rgba(74,222,128,.07); color: var(--green);  border: 1px solid rgba(74,222,128,.18); }
+  .ci-red   { background: rgba(192,59,43,.08);  color: #f07060;       border: 1px solid rgba(192,59,43,.2); }
+  .ci-muted { background: rgba(122,132,153,.08);color: var(--sub);    border: 1px solid var(--border); }
+
+  .card p { font-size: .88rem; margin: 0; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid;
+    margin: 3px;
+    letter-spacing: .05em;
+  }
+
+  .b-blue  { color: var(--accent); border-color: rgba(74,130,190,.38);  background: rgba(74,130,190,.07); }
+  .b-gold  { color: var(--gold2);  border-color: rgba(212,168,67,.32);  background: rgba(212,168,67,.06); }
+  .b-green { color: var(--green);  border-color: rgba(74,222,128,.28);  background: rgba(74,222,128,.05); }
+  .b-red   { color: #f07060;       border-color: rgba(192,59,43,.3);    background: rgba(192,59,43,.06); }
+
+  /* ── Comparativa ── */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  @media (max-width: 560px) { .compare { grid-template-columns: 1fr; } }
+
+  .cmp-col {
+    border-radius: 8px;
+    padding: 18px 20px;
+    border: 1px solid;
+  }
+
+  .cmp-bad  { border-color: rgba(192,59,43,.25); background: rgba(192,59,43,.04); }
+  .cmp-good { border-color: rgba(74,130,190,.28); background: rgba(74,130,190,.04); }
+
+  .cmp-title {
+    font-size: 9.5px;
+    font-weight: 800;
+    font-family: var(--mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .cmp-bad .cmp-title  { color: #f07060; }
+  .cmp-good .cmp-title { color: var(--accent); }
+
+  .cmp-item {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: .86rem;
+    color: var(--sub);
+    margin-bottom: 7px;
+  }
+
+  .cmp-item span { line-height: 1.4; }
+  .ico-bad  { color: #f07060; flex-shrink: 0; }
+  .ico-good { color: var(--accent); flex-shrink: 0; }
+
+  /* ── Arquitectura / capas ── */
+  .layer {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin: 8px 0;
+    border-radius: 7px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .layer-label {
+    background: rgba(74,130,190,.12);
+    border-right: 1px solid rgba(74,130,190,.2);
+    padding: 12px 14px;
+    font: 700 9.5px/1 var(--mono);
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    min-width: 120px;
+  }
+
+  .layer-label.gold {
+    background: rgba(212,168,67,.08);
+    border-right-color: rgba(212,168,67,.2);
+    color: var(--gold2);
+  }
+
+  .layer-body {
+    padding: 12px 16px;
+    font-size: .88rem;
+    color: var(--sub);
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .layer-body strong { color: var(--text); }
+
+  /* ── Log line ── */
+  .log-line {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font: 11.5px/1.5 var(--mono);
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--line2);
+  }
+
+  .log-line:last-child { border-bottom: none; }
+  .log-time   { color: var(--muted); white-space: nowrap; }
+  .log-op     { color: var(--accent); font-weight: 700; min-width: 80px; }
+  .log-action { min-width: 130px; }
+  .log-desc   { color: var(--sub); }
+  .la-ok      { color: var(--green); }
+  .la-warn    { color: var(--gold2); }
+  .la-err     { color: #f07060; }
+
+  .log-wrap {
+    background: rgba(0,0,0,.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 22px;
+    overflow: hidden;
+  }
+
+  .log-head {
+    background: rgba(74,130,190,.08);
+    border-bottom: 1px solid rgba(74,130,190,.18);
+    padding: 8px 14px;
+    font: 700 9.5px/1 var(--mono);
+    color: var(--accent);
+    letter-spacing: .1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Roles ── */
+  .role-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  @media (max-width: 560px) { .role-grid { grid-template-columns: 1fr; } }
+
+  .role-card {
+    border-radius: 8px;
+    padding: 18px 20px;
+    border: 1px solid;
+  }
+
+  .role-admin { border-color: rgba(212,168,67,.3); background: rgba(212,168,67,.04); }
+  .role-op    { border-color: rgba(74,130,190,.28); background: rgba(74,130,190,.04); }
+
+  .role-title {
+    font: 700 10px/1 var(--mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .role-admin .role-title { color: var(--gold2); }
+  .role-op    .role-title { color: var(--accent); }
+
+  .role-item {
+    font-size: .86rem;
+    color: var(--sub);
+    margin-bottom: 5px;
+    display: flex;
+    gap: 7px;
+    align-items: flex-start;
+  }
+
+  /* ── Canal de marketing ── */
+  .channel {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 15px 18px;
+    background: rgba(255,255,255,.02);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 9px;
+    transition: border-color .2s;
+  }
+
+  .channel:hover { border-color: rgba(74,130,190,.28); }
+
+  .ch-num {
+    font: 800 10px/1 var(--mono);
+    color: var(--accent);
+    background: rgba(74,130,190,.1);
+    border: 1px solid rgba(74,130,190,.22);
+    border-radius: 5px;
+    width: 26px; height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .ch-body { flex: 1; }
+  .ch-body h3 { margin-bottom: 4px; font-size: .93rem; }
+  .ch-body p  { font-size: .86rem; margin: 0; }
+
+  /* ── Stats ── */
+  .stat-row {
+    display: flex;
+    gap: 36px;
+    flex-wrap: wrap;
+    margin: 28px 0;
+  }
+
+  .stat { display: flex; flex-direction: column; gap: 3px; }
+
+  .stat-val {
+    font: 800 2.6rem/1 var(--mono);
+    color: var(--accent);
+  }
+
+  .stat-val.gold  { color: var(--gold2); }
+  .stat-val.green { color: var(--green); }
+
+  .stat-label { font: 500 10.5px/1 var(--mono); color: var(--sub); }
+
+  /* ── Portada ── */
+  #slide-0 {
+    background:
+      repeating-linear-gradient(0deg, rgba(74,130,190,.025) 0px, rgba(74,130,190,.025) 1px, transparent 1px, transparent 48px),
+      repeating-linear-gradient(90deg, rgba(74,130,190,.025) 0px, rgba(74,130,190,.025) 1px, transparent 1px, transparent 48px),
+      radial-gradient(ellipse 70% 50% at 65% 45%, rgba(74,130,190,.1) 0%, transparent 70%),
+      var(--bg);
+  }
+
+  .classified-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font: 700 10px/1 var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--gold2);
+    border: 1px solid rgba(212,168,67,.35);
+    background: rgba(212,168,67,.07);
+    padding: 6px 14px;
+    border-radius: 3px;
+    margin-bottom: 22px;
+  }
+
+  .classified-tag .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold2);
+    animation: blink 1.4s infinite;
+  }
+
+  /* ── Cita ── */
+  blockquote {
+    border-left: 2px solid var(--accent);
+    padding: 12px 18px;
+    background: rgba(74,130,190,.05);
+    border-radius: 0 6px 6px 0;
+    margin: 22px 0;
+    color: var(--text);
+    font-size: 1rem;
+    font-style: italic;
+  }
+
+  blockquote cite {
+    display: block;
+    margin-top: 7px;
+    font: 500 10.5px/1 var(--mono);
+    font-style: normal;
+    color: var(--sub);
+    letter-spacing: .04em;
+  }
+
+  /* ── Lanzamiento ── */
+  .launch-phase {
+    border-radius: 8px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.02);
+  }
+
+  .phase-title {
+    font: 700 10px/1 var(--mono);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .phase-item {
+    font-size: .86rem;
+    color: var(--sub);
+    margin-bottom: 6px;
+    padding-left: 14px;
+    position: relative;
+  }
+
+  .phase-item::before {
+    content: '·';
+    position: absolute;
+    left: 4px;
+    color: var(--muted);
+  }
+
+  /* ── CTA ── */
+  .cta-box { text-align: center; padding: 60px 24px; }
+  .cta-box h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 14px; }
+  .cta-box p { margin: 0 auto 28px; max-width: 520px; }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 6px;
+    font: 700 .88rem/1 var(--font);
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: all .2s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .btn-primary:hover { background: #5b93cf; border-color: #5b93cf; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 28px 0;
+  }
+
+  #footer {
+    text-align: center;
+    padding: 24px;
+    font: 500 10px/1 var(--mono);
+    color: var(--muted);
+    letter-spacing: .08em;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 680px) {
+    .nav-pills { display: none; }
+    .layer { flex-direction: column; }
+    .layer-label { writing-mode: horizontal-tb; min-width: unset; border-right: none; border-bottom: 1px solid rgba(74,130,190,.2); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Barra táctica de estado ──────────────────────────────────── -->
+<div id="statusbar">
+  <div class="sb-left">
+    <span class="pill-stat blue"><span class="dot"></span>CLASIFICADO</span>
+    <span class="pill-stat gold"><span class="dot"></span>CIFRADO AES-256-GCM</span>
+    <span class="pill-stat">ACCESO RESTRINGIDO</span>
+  </div>
+  <div class="sb-right">
+    <span style="color:var(--gold2);font-weight:800;letter-spacing:.18em">ARCANUM</span>
+    <span id="clk">--:--:--</span>
+  </div>
+</div>
+
+<!-- ── Barra de navegación ───────────────────────────────────────── -->
+<nav id="nav">
+  <span class="nav-brand"><span>ARC</span>ANUM <small>C3r0D4y Cyber Defense</small></span>
+  <ul class="nav-pills">
+    <li><a href="#slide-0" class="active">Inicio</a></li>
+    <li><a href="#slide-1">El problema</a></li>
+    <li><a href="#slide-2">Solución</a></li>
+    <li><a href="#slide-3">Arquitectura</a></li>
+    <li><a href="#slide-4">Funciones</a></li>
+    <li><a href="#slide-5">Roles</a></li>
+    <li><a href="#slide-6">Audiencia</a></li>
+    <li><a href="#slide-7">Estrategia</a></li>
+    <li><a href="#slide-8">Lanzamiento</a></li>
+  </ul>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 0 — Portada                                               -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-0">
+  <div class="slide-inner">
+    <div class="classified-tag"><span class="dot"></span> Sistema cifrado de gestión documental · C3r0D4y Cyber Defense</div>
+    <h1><em>ARC</em>ANUM</h1>
+    <p class="wide" style="font-size:1.15rem; color:#aab4cc; max-width:680px; margin-bottom:6px;">
+      Plataforma de <strong>gestión de expedientes clasificados</strong> con cifrado AES-256-GCM en archivos y metadatos.
+      Control de acceso por roles. Bitácora táctica completa.
+    </p>
+    <p class="wide" style="font-size:.92rem;">
+      Diseñado para oficinas gubernamentales, instituciones de seguridad y organismos que manejan documentación sensible.
+    </p>
+
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-val">2×</span>
+        <span class="stat-label">Capas de cifrado · archivos + metadatos BD</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val gold">0</span>
+        <span class="stat-label">PDFs en disco sin cifrar</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val green">100%</span>
+        <span class="stat-label">Acciones auditadas en bitácora</span>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+      <span class="badge b-gold">🔒 AES-256-GCM</span>
+      <span class="badge b-blue">📋 Expedientes PDF</span>
+      <span class="badge b-green">📊 Bitácora táctica</span>
+      <span class="badge b-gold">👥 Control de roles</span>
+      <span class="badge b-blue">🔐 Metadatos cifrados en BD</span>
+      <span class="badge b-green">🛡️ Principio de mínimo privilegio</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1 — El problema                                           -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt" id="slide-1">
+  <div class="slide-inner">
+    <div class="eyebrow">El problema</div>
+    <h2>Los expedientes más sensibles viven<br>en los sistemas <em class="gold">menos seguros</em></h2>
+    <p>La mayoría de sistemas de archivo documental en instituciones públicas almacenan PDFs en texto claro, sin auditoría de acceso y sin control granular de quién puede ver qué.</p>
+
+    <div class="compare">
+      <div class="cmp-col cmp-bad">
+        <div class="cmp-title">✕ Archivo documental tradicional</div>
+        <div class="cmp-item"><span class="ico-bad">✕</span><span>PDFs almacenados en disco sin ningún cifrado</span></div>
+        <div class="cmp-item"><span class="ico-bad">✕</span><span>Metadatos en claro en la base de datos: folios, asuntos, remitentes</span></div>
+        <div class="cmp-item"><span class="ico-bad">✕</span><span>Sin bitácora: imposible saber quién accedió a qué expediente</span></div>
+        <div class="cmp-item"><span class="ico-bad">✕</span><span>Un acceso no autorizado a la BD expone todo el archivo</span></div>
+        <div class="cmp-item"><span class="ico-bad">✕</span><span>Sin control de roles: cualquier usuario ve todos los documentos</span></div>
+        <div class="cmp-item"><span class="ico-bad">✕</span><span>Backup expuesto = expedientes expuestos</span></div>
+      </div>
+      <div class="cmp-col cmp-good">
+        <div class="cmp-title">✓ Con ARCANUM</div>
+        <div class="cmp-item"><span class="ico-good">✓</span><span>Cada PDF se cifra con AES-256-GCM antes de escribirse en disco</span></div>
+        <div class="cmp-item"><span class="ico-good">✓</span><span>Folio, asunto, remitente y nombre de archivo cifrados en BD</span></div>
+        <div class="cmp-item"><span class="ico-good">✓</span><span>Bitácora completa: cada login, consulta, edición y eliminación</span></div>
+        <div class="cmp-item"><span class="ico-good">✓</span><span>Sin clave de cifrado, los datos en BD y disco son ilegibles</span></div>
+        <div class="cmp-item"><span class="ico-good">✓</span><span>Roles diferenciados: admin y operador con permisos distintos</span></div>
+        <div class="cmp-item"><span class="ico-good">✓</span><span>Backup cifrado: exponer el archivo no expone los datos</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 — La solución                                           -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="slide-inner">
+    <div class="eyebrow">La solución</div>
+    <h2>Doble capa de cifrado.<br>Auditoría total. <em>Acceso restringido.</em></h2>
+
+    <blockquote>
+      "Si alguien obtiene acceso al servidor o a la base de datos sin la clave de cifrado, solo verá bytes aleatorios. Ningún expediente, ningún metadato, ningún nombre de archivo."
+      <cite>— Arquitectura de seguridad de ARCANUM</cite>
+    </blockquote>
+
+    <p class="wide">
+      ARCANUM es un sistema MVC en PHP/MySQL que implementa cifrado <strong>AES-256-GCM</strong> en dos niveles independientes:
+      los archivos PDF se almacenan como blobs cifrados <code>.enc</code>, y los metadatos sensibles de la base de datos
+      (folio, asunto, remitente, nombre de archivo) se guardan con el prefijo <code>ENC:</code> en formato base64 cifrado.
+      El descifrado ocurre en memoria, nunca en disco.
+    </p>
+
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="card-icon ci-gold">🔐</div>
+        <h3>Archivos cifrados en disco</h3>
+        <p>Los PDFs se almacenan como <code>.enc</code>. Sin la clave del sistema, son indistinguibles de datos aleatorios.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-blue">🗄️</div>
+        <h3>Metadatos cifrados en BD</h3>
+        <p>Folio, asunto, remitente y nombre de archivo tienen prefijo <code>ENC:</code> en la base de datos. Un <code>SELECT</code> directo no revela nada.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-green">🧠</div>
+        <h3>Descifrado en memoria</h3>
+        <p>El PDF original nunca se escribe en disco. Se descifra en RAM y se sirve directamente al navegador autorizado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3 — Arquitectura de cifrado                               -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt" id="slide-3">
+  <div class="slide-inner">
+    <div class="eyebrow">Arquitectura de cifrado</div>
+    <h2>Formato binario con<br><em>autenticación GCM</em> integrada</h2>
+    <p>El cifrado GCM no solo protege la confidencialidad — detecta cualquier modificación del archivo, por mínima que sea.</p>
+
+    <div style="margin-top: 26px;">
+      <div class="layer">
+        <div class="layer-label">Archivo en disco</div>
+        <div class="layer-body">
+          <code style="font-size:12px">[ IV · 12 bytes ] [ TAG · 16 bytes ] [ Texto cifrado · variable ]</code>
+          &nbsp;→&nbsp; <strong style="margin-left:8px;">Archivo <code>.enc</code></strong>
+        </div>
+      </div>
+
+      <div class="layer" style="margin-top:8px;">
+        <div class="layer-label gold">Campo en BD</div>
+        <div class="layer-body">
+          <code style="font-size:12px">ENC:</code><code style="font-size:12px">base64( IV + TAG + texto cifrado )</code>
+          &nbsp;→&nbsp; <strong style="margin-left:8px;">Campo MEDIUMTEXT</strong>
+        </div>
+      </div>
+
+      <div class="layer" style="margin-top:8px;">
+        <div class="layer-label" style="background:rgba(74,222,128,.07);border-right-color:rgba(74,222,128,.18);color:var(--green)">Verificación</div>
+        <div class="layer-body">
+          Si el TAG de autenticación no coincide → <strong style="color:#f07060;">acceso denegado automáticamente</strong>.
+          Protege contra manipulación de archivos en disco o BD.
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="grid grid-4" style="margin-top:0;">
+      <div class="card">
+        <div class="card-icon ci-blue" style="font-size:13px;">AES</div>
+        <h3>AES-256-GCM</h3>
+        <p>Algoritmo: <code>aes-256-gcm</code> vía OpenSSL. Clave de 256 bits derivada de variable de entorno.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-gold">🎲</div>
+        <h3>IV aleatorio</h3>
+        <p>Cada cifrado genera 12 bytes de IV con <code>random_bytes()</code>. Dos cifrados del mismo PDF = blobs distintos.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-green">✅</div>
+        <h3>Tag de 16 bytes</h3>
+        <p>El tag GCM autentica el contenido. Cualquier bit alterado en el archivo cifrado es detectado al leer.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-muted">🔑</div>
+        <h3>Mínimo privilegio BD</h3>
+        <p>El usuario de MySQL solo tiene <code>SELECT, INSERT, UPDATE, DELETE</code>. Sin acceso DDL ni a otras bases.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4 — Funciones del sistema                                  -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-4">
+  <div class="slide-inner">
+    <div class="eyebrow">Funciones del sistema</div>
+    <h2>Todo lo que necesita un archivo<br>documental <em>de grado operacional</em></h2>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-icon ci-blue">📁</div>
+        <h3>Gestión de expedientes</h3>
+        <p>Crear, editar, visualizar y eliminar expedientes con folio, fecha, asunto, remitente y clasificación (oficio / memorándum / carta).</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-gold">🔒</div>
+        <h3>Cifrado automático al subir</h3>
+        <p>Al registrar un expediente, el PDF se cifra con AES-256-GCM antes de escribirse en disco. El usuario nunca interactúa con el proceso.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-green">👁️</div>
+        <h3>Visor de PDF integrado</h3>
+        <p>Visualización en iframe dentro del sistema. El PDF se descifra en memoria y se sirve directamente. Nunca toca el disco como archivo claro.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-gold">🔍</div>
+        <h3>Búsqueda y filtrado</h3>
+        <p>Filtros por folio, asunto, fecha y tipo de documento. Los campos cifrados se descifran en tiempo real para permitir la búsqueda.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-blue">📊</div>
+        <h3>Bitácora de operaciones</h3>
+        <p>Cada acción queda registrada: logins exitosos y fallidos, creaciones, ediciones, eliminaciones, IP del operador y timestamp exacto.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-green">🛡️</div>
+        <h3>Protección CSRF</h3>
+        <p>Todos los formularios incluyen token CSRF firmado por sesión. Los intentos de falsificación de solicitudes son bloqueados automáticamente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 5 — Roles y control de acceso                             -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt2" id="slide-5">
+  <div class="slide-inner">
+    <div class="eyebrow">Control de acceso</div>
+    <h2>Dos niveles de autorización.<br><em>Responsabilidad separada.</em></h2>
+    <p>El modelo de roles de ARCANUM aplica el principio de necesidad de conocer: cada operador solo accede a lo que su nivel autoriza.</p>
+
+    <div class="role-grid">
+      <div class="role-card role-admin">
+        <div class="role-title">⭐ Administrador</div>
+        <div class="role-item"><span style="color:var(--gold2)">✓</span> &nbsp;Gestión completa de expedientes</div>
+        <div class="role-item"><span style="color:var(--gold2)">✓</span> &nbsp;Alta, edición y revocación de operadores</div>
+        <div class="role-item"><span style="color:var(--gold2)">✓</span> &nbsp;Consulta de bitácora de operaciones</div>
+        <div class="role-item"><span style="color:var(--gold2)">✓</span> &nbsp;Eliminación de expedientes</div>
+        <div class="role-item"><span style="color:var(--gold2)">✓</span> &nbsp;Acceso a todas las secciones del sistema</div>
+        <div class="role-item" style="margin-top:10px; color:var(--muted)"><span>→</span> &nbsp;Perfil: jefe de área, responsable de seguridad</div>
+      </div>
+      <div class="role-card role-op">
+        <div class="role-title">🔵 Operador</div>
+        <div class="role-item"><span style="color:var(--accent)">✓</span> &nbsp;Registrar nuevos expedientes</div>
+        <div class="role-item"><span style="color:var(--accent)">✓</span> &nbsp;Consultar y visualizar expedientes</div>
+        <div class="role-item"><span style="color:var(--accent)">✓</span> &nbsp;Editar metadatos de expedientes propios</div>
+        <div class="role-item"><span style="color:var(--muted)">✕</span> &nbsp;<span style="color:var(--muted)">Sin acceso a gestión de usuarios</span></div>
+        <div class="role-item"><span style="color:var(--muted)">✕</span> &nbsp;<span style="color:var(--muted)">Sin acceso a bitácora del sistema</span></div>
+        <div class="role-item" style="margin-top:10px; color:var(--muted)"><span>→</span> &nbsp;Perfil: oficial, auxiliar administrativo</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="eyebrow" style="margin-bottom:14px;">Bitácora táctica — muestra de eventos</div>
+
+    <div class="log-wrap">
+      <div class="log-head">// SYSTEM_LOGS — Registro de actividad del sistema en tiempo real</div>
+      <div class="log-line">
+        <span class="log-time">2026-06-26 08:14:03</span>
+        <span class="log-op">Admin</span>
+        <span class="log-action la-ok">login</span>
+        <span class="log-desc">Inicio de sesión exitoso — IP: 192.168.1.10</span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">2026-06-26 08:17:42</span>
+        <span class="log-op">Admin</span>
+        <span class="log-action la-ok">document_created</span>
+        <span class="log-desc">Expediente EXP-2026-0047 creado y cifrado</span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">2026-06-26 09:05:11</span>
+        <span class="log-op">Operador</span>
+        <span class="log-action la-ok">login</span>
+        <span class="log-desc">Inicio de sesión exitoso — IP: 192.168.1.22</span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">2026-06-26 09:31:58</span>
+        <span class="log-op">Operador</span>
+        <span class="log-action la-ok">document_updated</span>
+        <span class="log-desc">Expediente EXP-2026-0031 actualizado</span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">2026-06-26 10:02:17</span>
+        <span class="log-op">—</span>
+        <span class="log-action la-err">login_failed</span>
+        <span class="log-desc">Credenciales inválidas — IP: 10.0.0.5 — 3er intento</span>
+      </div>
+      <div class="log-line">
+        <span class="log-time">2026-06-26 11:45:30</span>
+        <span class="log-op">Admin</span>
+        <span class="log-action la-warn">document_deleted</span>
+        <span class="log-desc">Expediente EXP-2026-0012 eliminado y archivo .enc borrado</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 6 — Audiencia objetivo                                     -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt" id="slide-6">
+  <div class="slide-inner">
+    <div class="eyebrow">Audiencia objetivo</div>
+    <h2>¿Quién necesita <em>ARCANUM</em>?</h2>
+    <p>Cualquier institución que maneje expedientes con requisitos de confidencialidad, trazabilidad y control de acceso.</p>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-icon ci-gold">🏛️</div>
+        <h3>Oficinas gubernamentales</h3>
+        <p>Ministerios, secretarías, delegaciones y dependencias que gestionan oficios, memorándums y correspondencia oficial con datos sensibles.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-blue">🛡️</div>
+        <h3>Instituciones de seguridad</h3>
+        <p>Fuerzas policiales, agencias de inteligencia y organismos de defensa que requieren trazabilidad completa de acceso a documentación clasificada.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-green">⚖️</div>
+        <h3>Departamentos jurídicos</h3>
+        <p>Bufetes, fiscalías y asesorías legales que manejan expedientes con información privilegiada sujeta a confidencialidad profesional.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-gold">🏥</div>
+        <h3>Sector salud y clínicas</h3>
+        <p>Gestión de expedientes clínicos y administrativos con requisitos de privacidad regulados (HIPAA, LOPD, NOM-024).</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-blue">🏦</div>
+        <h3>Instituciones financieras</h3>
+        <p>Bancos, aseguradoras y fondos que deben cumplir con marcos regulatorios estrictos de protección de información financiera.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-green">🎓</div>
+        <h3>Universidades y centros de investigación</h3>
+        <p>Gestión de expedientes académicos, resultados de investigación restringida y documentación de propiedad intelectual.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 7 — Estrategia de promoción                               -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-7">
+  <div class="slide-inner">
+    <div class="eyebrow">Estrategia de promoción online</div>
+    <h2>Cómo posicionar ARCANUM<br>ante la <em>audiencia institucional</em></h2>
+    <p>ARCANUM no se promueve como un producto de consumo — se posiciona como una solución de infraestructura de seguridad. El canal y el mensaje son distintos a los de otras apps.</p>
+
+    <div style="margin-top: 22px;">
+
+      <div class="channel">
+        <div class="ch-num">01</div>
+        <div class="ch-body">
+          <h3>LinkedIn — decisores institucionales</h3>
+          <p>El canal principal. Publicar artículos técnicos dirigidos a directores de TI, jefes de seguridad y responsables de cumplimiento normativo. Títulos como <em>"¿Cómo almacena tu institución los expedientes PDF? El problema que nadie revisa"</em> atraen a la audiencia exacta. Mostrar el problema primero, la solución después.</p>
+        </div>
+      </div>
+
+      <div class="channel">
+        <div class="ch-num">02</div>
+        <div class="ch-body">
+          <h3>GitHub — código abierto como credencial técnica</h3>
+          <p>Publicar el código con documentación técnica detallada. Los equipos de seguridad institucional no compran lo que no pueden auditar. Un repositorio público con README claro, esquema SQL comentado y arquitectura de cifrado documentada genera confianza en evaluadores técnicos.</p>
+        </div>
+      </div>
+
+      <div class="channel">
+        <div class="ch-num">03</div>
+        <div class="ch-body">
+          <h3>YouTube — demo en entorno real</h3>
+          <p>Video de 3–4 minutos mostrando el flujo completo: subir un PDF, ver cómo se guarda como <code>.enc</code>, consultarlo, revisar la bitácora. Mostrar explícitamente que en la base de datos los campos aparecen cifrados. Este tipo de demo técnica convence a audiencias que saben lo que buscan.</p>
+        </div>
+      </div>
+
+      <div class="channel">
+        <div class="ch-num">04</div>
+        <div class="ch-body">
+          <h3>Reddit — r/netsec, r/selfhosted, r/sysadmin</h3>
+          <p>Presentarlo como solución de auto-alojamiento para instituciones. El mensaje en estas comunidades es: <em>"Construí un sistema de archivos documentales con cifrado AES-256-GCM doble capa porque los gestores documentales empresariales no cifran los metadatos"</em>. La diferenciación técnica funciona aquí.</p>
+        </div>
+      </div>
+
+      <div class="channel">
+        <div class="ch-num">05</div>
+        <div class="ch-body">
+          <h3>Hacker News — Show HN</h3>
+          <p><em>"Show HN: Self-hosted document management with AES-256-GCM encryption on files AND metadata fields"</em>. La doble capa de cifrado (archivos + metadatos en BD) es el gancho diferenciador. Pocos sistemas hacen esto. La audiencia técnica de HN lo identificará como no trivial.</p>
+        </div>
+      </div>
+
+      <div class="channel">
+        <div class="ch-num">06</div>
+        <div class="ch-body">
+          <h3>Contenido SEO — blog o documentación pública</h3>
+          <p>Artículos sobre temas de búsqueda orgánica: <em>"Cómo cifrar expedientes PDF en PHP"</em>, <em>"AES-256-GCM en base de datos MySQL"</em>, <em>"Sistema de archivo documental con cifrado"</em>. El SEO técnico atrae a desarrolladores que buscan soluciones para sus instituciones.</p>
+        </div>
+      </div>
+
+      <div class="channel">
+        <div class="ch-num">07</div>
+        <div class="ch-body">
+          <h3>Ferias y congresos de e-gobierno y ciberseguridad</h3>
+          <p>Presentar ARCANUM en eventos de transformación digital gubernamental, seguridad de la información y gestión documental. La audiencia institucional que toma decisiones de compra/adopción asiste a estos espacios. Una demo en vivo ante un decisor vale más que mil publicaciones online.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 8 — Plan de lanzamiento                                    -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide slide-alt" id="slide-8">
+  <div class="slide-inner">
+    <div class="eyebrow">Plan de lanzamiento</div>
+    <h2>De demo local a<br><em>referente institucional</em> en 30 días</h2>
+
+    <div class="grid grid-3">
+      <div class="launch-phase" style="border-color:rgba(212,168,67,.25);">
+        <div class="phase-title" style="color:var(--gold2);">// Semana 1-2 — Preparar</div>
+        <div class="phase-item">Demo pública en servidor propio con HTTPS</div>
+        <div class="phase-item">Repositorio GitHub con README técnico completo</div>
+        <div class="phase-item">Diagrama de arquitectura de cifrado exportable</div>
+        <div class="phase-item">Video demo de 3–4 min con narración</div>
+        <div class="phase-item">Documentación de instalación rápida (<code>schema.sql</code>)</div>
+      </div>
+      <div class="launch-phase" style="border-color:rgba(74,130,190,.25);">
+        <div class="phase-title" style="color:var(--accent);">// Semana 3 — Lanzar técnico</div>
+        <div class="phase-item">Show HN en Hacker News</div>
+        <div class="phase-item">Posts en r/netsec, r/selfhosted, r/sysadmin</div>
+        <div class="phase-item">Publicar video en YouTube</div>
+        <div class="phase-item">Hilo técnico en Twitter/X sobre la arquitectura</div>
+        <div class="phase-item">Subir a directorios de herramientas open source</div>
+      </div>
+      <div class="launch-phase" style="border-color:rgba(74,222,128,.2);">
+        <div class="phase-title" style="color:var(--green);">// Semana 4 — Lanzar institucional</div>
+        <div class="phase-item">Artículo en LinkedIn para decisores TI</div>
+        <div class="phase-item">Contactar instituciones gubernamentales locales</div>
+        <div class="phase-item">Artículo SEO en blog propio o Medium</div>
+        <div class="phase-item">Recopilar feedback de primeros usuarios</div>
+        <div class="phase-item">Planificar congreso o presentación presencial</div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="grid grid-2" style="margin-top:0;">
+      <div class="card">
+        <div class="card-icon ci-blue">📐</div>
+        <h3>Mensaje central diferenciador</h3>
+        <p><strong>"El primer sistema de archivo documental que cifra tanto los archivos como los metadatos de la base de datos. Un SQL dump no te dice nada sin la clave."</strong></p>
+      </div>
+      <div class="card">
+        <div class="card-icon ci-gold">📊</div>
+        <h3>Métricas de éxito</h3>
+        <p>Stars en GitHub · Instancias self-hosted reportadas · Visitas a la demo · Menciones en comunidades técnicas · Consultas institucionales recibidas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════ -->
+<!-- CTA Final                                                        -->
+<!-- ════════════════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-cta" style="background: radial-gradient(ellipse 65% 50% at 50% 50%, rgba(184,147,90,.1) 0%, transparent 65%), var(--bg);">
+  <div class="slide-inner cta-box">
+    <div class="classified-tag" style="justify-content:center;"><span class="dot"></span> Sistema en línea · Acceso restringido a personal autorizado</div>
+    <h2>Sistema cifrado de <em>expedientes clasificados</em><br>listo para desplegar</h2>
+    <p>Instalación en menos de 5 minutos. Un <code>schema.sql</code> y un servidor PHP/MySQL es todo lo que necesitas.</p>
+    <div class="btn-row">
+      <a class="btn btn-primary" href="/arcanum/login">
+        🔐 Acceder a ARCANUM
+      </a>
+      <a class="btn btn-ghost" href="#slide-0">
+        ↑ Ver presentación de nuevo
+      </a>
+    </div>
+
+    <hr style="max-width: 420px; margin: 36px auto;">
+
+    <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+      <span class="badge b-gold">AES-256-GCM · Doble capa</span>
+      <span class="badge b-blue">Metadatos cifrados en BD</span>
+      <span class="badge b-green">Bitácora táctica completa</span>
+      <span class="badge b-gold">Roles admin / operador</span>
+      <span class="badge b-blue">Visor PDF en memoria</span>
+      <span class="badge b-green">CSRF · bcrypt · mínimo privilegio</span>
+    </div>
+
+    <div style="margin-top:20px; font:500 10.5px/1 var(--mono); color:var(--muted); letter-spacing:.06em;">
+      C3r0D4y Cyber Defense · ARCANUM v1.0 · Acceso restringido a personal autorizado
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────────── -->
+<footer id="footer">
+  C3R0D4Y CYBER DEFENSE &nbsp;·&nbsp; ARCANUM v1.0 &nbsp;·&nbsp; SISTEMA CLASIFICADO &nbsp;·&nbsp; PRESENTACIÓN DE PRODUCTO
+</footer>
+
+<!-- ── Scripts ────────────────────────────────────────────────────── -->
+<script>
+  /* Reloj táctica en la barra de estado */
+  function tick() {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    document.getElementById('clk').textContent =
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  /* Navegación activa al hacer scroll */
+  const links    = document.querySelectorAll('.nav-pills a');
+  const sections = document.querySelectorAll('.slide[id]');
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const id = e.target.id;
+        links.forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { threshold: 0.4 });
+
+  sections.forEach(s => obs.observe(s));
+</script>
+
+</body>
+</html>

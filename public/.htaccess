@@ -1,0 +1,44 @@
+RewriteEngine On
+php_value upload_max_filesize 20M
+php_value post_max_size 24M
+php_value max_execution_time 120
+php_value max_input_time 120
+
+# Sirve robots.txt y sitemap.xml desde archivos PHP dinamicos
+RewriteRule ^robots\.txt$ robots.php [L]
+RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+# Sirve favicon.ico usando el PNG generado (sin redirección)
+RewriteRule ^favicon\.ico$ assets/img/favicon.png [L,T=image/png]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+# ── Compresión gzip ──────────────────────────────────────────────────────────
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript image/svg+xml
+</IfModule>
+
+# ── Caché del navegador para assets estáticos ────────────────────────────────
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg   "access plus 1 year"
+    ExpiresByType image/webp   "access plus 1 year"
+    ExpiresByType image/png    "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType text/css              "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType font/woff2  "access plus 1 year"
+    ExpiresByType font/woff   "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpg|jpeg|webp|png|svg|ico|woff2|woff)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>

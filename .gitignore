@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────
+#  SECRETOS — nunca deben salir del servidor
+#  secrets.local.php contiene la clave maestra AES-256 y las
+#  credenciales de MySQL. Si se filtra, todo el archivo cifrado
+#  queda expuesto. Usa config/secrets.example.php como plantilla.
+# ─────────────────────────────────────────────────────────────────
+config/secrets.local.php
+/var/www/arcanum-secrets.php
+
+# ─────────────────────────────────────────────────────────────────
+#  DATOS — expedientes cifrados y fotos de perfil de la instancia
+# ─────────────────────────────────────────────────────────────────
+storage/pdfs/*
+!storage/pdfs/.gitkeep
+storage/avatars/*
+!storage/avatars/.gitkeep
+!storage/.htaccess
+
+# Volcados de base de datos.
+# Se ignora cualquier .sql suelto en la raíz (los volcados de phpMyAdmin
+# caen ahí y llevan datos reales). Los scripts de database/ sí se
+# versionan: son el esquema y las migraciones, sin datos.
+/*.sql
+*.sql.gz
+*.dump
+backup*.sql
+
+# Configuración local del entorno
+.env
+.env.local
+
+# Basura de sistemas operativos y editores
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Registros
+*.log
+storage/logs/*

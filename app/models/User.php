@@ -27,7 +27,8 @@ final class User
     public function all(): array
     {
         $stmt = Database::connection()->query(
-            'SELECT id, name, email, role, active, created_at
+            'SELECT id, name, email, role, active, failed_attempts, locked_at,
+                    avatar, must_change_password, created_at
              FROM users
              ORDER BY name ASC, id ASC'
         );
@@ -44,7 +45,8 @@ final class User
     public function find(int $id): ?array
     {
         $stmt = Database::connection()->prepare(
-            'SELECT id, name, email, role, active, created_at
+            'SELECT id, name, email, role, active, failed_attempts, locked_at,
+                    avatar, must_change_password, created_at, pin_hash
              FROM users
              WHERE id = :id'
         );
@@ -134,9 +136,11 @@ final class User
     public function create(array $data): int
     {
         $stmt = Database::connection()->prepare(
-            'INSERT INTO users (name, email, password_hash, role, active, created_at)
-             VALUES (:name, :email, :password_hash, :role, :active, NOW())'
+            'INSERT INTO users (name, email, password_hash, role, active, avatar, must_change_password, created_at)
+             VALUES (:name, :email, :password_hash, :role, :active, :avatar, :must_change_password, NOW())'
         );
+        $data['avatar']                = $data['avatar'] ?? null;
+        $data['must_change_password']  = $data['must_change_password'] ?? 0;
         $stmt->execute($data);
         return (int) Database::connection()->lastInsertId();
     }
@@ -166,6 +170,16 @@ final class User
             $sets[] = 'password_hash = :password_hash';
         }
 
+        // Solo se actualiza el avatar si se indica explícitamente
+        if (array_key_exists('avatar', $data)) {
+            $sets[] = 'avatar = :avatar';
+        }
+
+        // Permite forzar el cambio de contraseña en el próximo ingreso
+        if (isset($data['must_change_password'])) {
+            $sets[] = 'must_change_password = :must_change_password';
+        }
+
         $data['id'] = $id;
 
         Database::connection()
@@ -185,5 +199,174 @@ final class User
         Database::connection()
             ->prepare('DELETE FROM users WHERE id = :id')
             ->execute(['id' => $id]);
+    }
+
+    /**
+     * Devuelve el pin_hash del usuario para verificarlo al operar.
+     * Se usa solo en el endpoint de verificación de PIN.
+     */
+    public function findPin(int $id): ?string
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT pin_hash FROM users WHERE id = :id LIMIT 1'
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        return $row ? ($row['pin_hash'] ?? null) : null;
+    }
+
+    /**
+     * Guarda el hash del PIN del usuario.
+     */
+    public function updatePin(int $id, string $pinHash): void
+    {
+        Database::connection()
+            ->prepare('UPDATE users SET pin_hash = :hash WHERE id = :id')
+            ->execute(['hash' => $pinHash, 'id' => $id]);
+    }
+
+    /**
+     * Marca que el usuario ya cambió su contraseña obligatoria.
+     */
+    public function clearMustChangePassword(int $id): void
+    {
+        Database::connection()
+            ->prepare('UPDATE users SET must_change_password = 0 WHERE id = :id')
+            ->execute(['id' => $id]);
+    }
+
+    /**
+     * Actualiza la contraseña del usuario.
+     */
+    public function updatePassword(int $id, string $passwordHash): void
+    {
+        Database::connection()
+            ->prepare('UPDATE users SET password_hash = :hash WHERE id = :id')
+            ->execute(['hash' => $passwordHash, 'id' => $id]);
+    }
+
+    /**
+     * Actualiza el avatar del perfil propio del usuario.
+     */
+    public function updateAvatar(int $id, ?string $filename): void
+    {
+        Database::connection()
+            ->prepare('UPDATE users SET avatar = :avatar WHERE id = :id')
+            ->execute(['avatar' => $filename, 'id' => $id]);
+    }
+
+    /**
+     * Guarda si la tabla users ya tiene la columna lock_expires_at.
+     * Se consulta una sola vez por petición para no repetir la verificación.
+     * Si la migración migrate_lockout.sql aún no se ejecuta, el sistema
+     * sigue funcionando con el comportamiento anterior (bloqueo permanente).
+     */
+    private static ?bool $tieneExpiracionBloqueo = null;
+
+    /**
+     * Verifica si existe la columna lock_expires_at en la tabla users.
+     */
+    private static function hasLockExpiry(): bool
+    {
+        if (self::$tieneExpiracionBloqueo === null) {
+            try {
+                $stmt = Database::connection()
+                    ->query("SHOW COLUMNS FROM users LIKE 'lock_expires_at'");
+                self::$tieneExpiracionBloqueo = (bool) $stmt->fetch();
+            } catch (\Throwable) {
+                self::$tieneExpiracionBloqueo = false;
+            }
+        }
+        return self::$tieneExpiracionBloqueo;
+    }
+
+    /**
+     * Calcula cuántos segundos dura el bloqueo temporal según el número
+     * de intentos fallidos acumulados. La espera crece con cada bloqueo
+     * para frenar ataques de fuerza bruta sin castigar de por vida a un
+     * usuario legítimo que se equivocó:
+     *   1er bloqueo (3 intentos)  => 1 minuto
+     *   2do bloqueo (6 intentos)  => 5 minutos
+     *   3ro en adelante           => 30 minutos
+     */
+    public static function lockDuration(int $attempts): int
+    {
+        return match (intdiv($attempts, 3)) {
+            1       => 60,
+            2       => 300,
+            default => 1800,
+        };
+    }
+
+    /**
+     * Incrementa el contador de intentos fallidos de autenticación y
+     * devuelve el total acumulado. Cada 3 intentos fallidos la cuenta
+     * se bloquea:
+     *
+     *  - Bloqueo temporal (predeterminado): la cuenta se libera sola al
+     *    pasar la espera calculada por lockDuration(). Se usa en la etapa
+     *    de contraseña, donde el atacante aún no ha probado nada.
+     *
+     *  - Bloqueo permanente ($permanente = true): solo lo quita un
+     *    administrador. Se usa cuando falla el PIN, porque en ese punto
+     *    la contraseña ya fue verificada y el riesgo es mayor.
+     */
+    public function incrementFailedAttempts(int $id, bool $permanente = false): int
+    {
+        $pdo = Database::connection();
+
+        // Suma un intento fallido al contador
+        $pdo->prepare('UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = :id')
+            ->execute(['id' => $id]);
+
+        // Lee el total acumulado para decidir si toca bloquear
+        $stmt = $pdo->prepare('SELECT failed_attempts FROM users WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $attempts = (int) $stmt->fetchColumn();
+
+        // Cada múltiplo de 3 intentos dispara un nuevo bloqueo
+        if ($attempts >= 3 && $attempts % 3 === 0) {
+            if ($permanente || !self::hasLockExpiry()) {
+                // Bloqueo sin fecha de expiración: requiere un administrador
+                $sql = self::hasLockExpiry()
+                    ? 'UPDATE users SET locked_at = NOW(), lock_expires_at = NULL WHERE id = :id'
+                    : 'UPDATE users SET locked_at = NOW() WHERE id = :id';
+                $pdo->prepare($sql)->execute(['id' => $id]);
+            } else {
+                // Bloqueo temporal con espera creciente
+                $pdo->prepare(
+                    'UPDATE users SET locked_at = NOW(),
+                            lock_expires_at = DATE_ADD(NOW(), INTERVAL :seg SECOND)
+                     WHERE id = :id'
+                )->execute(['seg' => self::lockDuration($attempts), 'id' => $id]);
+            }
+        }
+
+        return $attempts;
+    }
+
+    /**
+     * Restablece el contador de intentos fallidos y desbloquea la cuenta.
+     * Se llama al autenticarse correctamente para limpiar el historial.
+     */
+    public function resetFailedAttempts(int $id): void
+    {
+        $campos = 'failed_attempts = 0, locked_at = NULL';
+        if (self::hasLockExpiry()) {
+            $campos .= ', lock_expires_at = NULL';
+        }
+        Database::connection()
+            ->prepare("UPDATE users SET {$campos} WHERE id = :id")
+            ->execute(['id' => $id]);
+    }
+
+    /**
+     * Desbloquea manualmente una cuenta bloqueada.
+     * Solo puede ejecutarlo un administrador desde el panel de control.
+     */
+    public function unlock(int $id): void
+    {
+        // Misma limpieza que al autenticarse correctamente
+        $this->resetFailedAttempts($id);
     }
 }

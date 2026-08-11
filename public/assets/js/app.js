@@ -2,47 +2,103 @@
  * Archivo: public/assets/js/app.js
  * Autor:   C3r0d4y
  *
- * ¿Qué hace este archivo?
- * Agrega comportamientos interactivos a la interfaz del usuario:
+ * Comportamientos interactivos de ARCANUM:
  *
- *  1. Confirmación antes de eliminar registros.
- *  2. Validación en tiempo real del tipo de archivo al seleccionar PDF.
- *  3. Envío automático del formulario de filtros al cambiar cualquier campo.
- *  4. Vista previa del PDF seleccionado antes de guardar el formulario.
+ *  1. Modal de confirmación unificado con PIN de seguridad.
+ *     Formularios con data-confirm muestran confirmación antes de enviar.
+ *     Formularios con data-pin-required solicitan PIN al usuario.
+ *     Si el formulario tiene ambos atributos: confirmación → PIN → envío.
  *
- * Todo el código se envuelve en DOMContentLoaded para asegurarse de que
- * el HTML esté completamente cargado antes de buscar elementos en la página.
+ *  2. Validación del tipo de archivo al seleccionar un PDF.
+ *  3. Envío automático del formulario de filtros.
+ *  4. Vista previa del PDF seleccionado antes de guardar.
+ *  5. Vista previa de la foto de perfil/avatar al seleccionar.
+ *  6. Campos de fecha: el calendario se abre al hacer clic en el campo.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    /* ---------------------------------------------------------------
-     * 1. Confirmación personalizada antes de enviar formularios peligrosos
+    /* ── Utilidades ── */
+
+    /* URL base de la aplicación, publicada por el servidor en una meta
+       etiqueta; así las rutas funcionan sin importar la carpeta de
+       instalación (arcanum, arcanum_demo, etc.) */
+    const BASE_URL = (document.querySelector('meta[name="base-url"]')?.content || '/')
+        .replace(/\/+$/, '') + '/';
+
+    /* URL del endpoint de verificación de PIN */
+    const PIN_VERIFY_URL = BASE_URL + 'pin/verify';
+
+    /* Lee el token CSRF de la meta etiqueta */
+    function csrfToken() {
+        return document.querySelector('meta[name="csrf-token"]')?.content || '';
+    }
+
+    /* ── VERSIÓN DEMO: bloqueo de acciones que escriben en la base ──
      *
-     * Busca todos los formularios que tengan el atributo data-confirm.
-     * En lugar del diálogo nativo del navegador, muestra el modal táctico
-     * #modal-confirm con el mensaje del atributo data-confirm.
-     *
-     * Al confirmar, marca el formulario con data-confirmed="1" y lo reenvía.
-     * En el segundo disparo el listener detecta la marca y deja pasar el envío.
-     *
-     * Ejemplo de uso en HTML:
-     * <form data-confirm="¿Eliminar este documento?"> ... </form>
-     * --------------------------------------------------------------- */
+     * La interfaz se conserva idéntica a la original: todos los botones
+     * de crear, editar y eliminar siguen visibles. Pero al enviar un
+     * formulario que modificaría la base de datos, se muestra el aviso
+     * de VERSIÓN DEMO y la petición nunca sale del navegador.
+     * (El servidor tiene su propia barrera por si se evita esta.)
+     */
+    const modalDemo = document.getElementById('modal-demo');
+    const demoOk    = document.getElementById('demo-ok');
+
+    /* Muestra el aviso de solo lectura */
+    function showDemoModal() {
+        if (!modalDemo) {
+            window.alert('Versión DEMO, no puede realizar cambios.');
+            return;
+        }
+        modalDemo.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        function cerrar() {
+            modalDemo.style.display = 'none';
+            document.body.style.overflow = '';
+            if (demoOk) { demoOk.removeEventListener('click', cerrar); }
+            modalDemo.removeEventListener('click', fondo);
+            document.removeEventListener('keydown', escape);
+        }
+        function fondo(e)  { if (e.target === modalDemo) cerrar(); }
+        function escape(e) { if (e.key === 'Escape') cerrar(); }
+
+        if (demoOk) { demoOk.addEventListener('click', cerrar); }
+        modalDemo.addEventListener('click', fondo);
+        document.addEventListener('keydown', escape);
+    }
+
+    /* Rutas que implican escritura en la base de datos.
+       Se permiten login, login/pin y pin/verify para poder navegar. */
+    const DEMO_RUTAS_BLOQUEADAS =
+        /\/(store|update|delete|unlock)$|\/profile\/(password|pin|avatar)$/;
+
+    /* Fase de captura: este manejador corre ANTES que los de
+       confirmación y PIN, de modo que el clic muestra el aviso
+       de inmediato y ningún otro flujo continúa. */
+    document.addEventListener('submit', (e) => {
+        const form   = e.target;
+        const accion = (form.getAttribute('action') || window.location.pathname)
+            .split('?')[0];
+        if (DEMO_RUTAS_BLOQUEADAS.test(accion)) {
+            e.preventDefault();
+            e.stopPropagation();
+            showDemoModal();
+        }
+    }, true);
+
+    /* ── Modal de confirmación (reutilizable) ── */
     const modalConfirm       = document.getElementById('modal-confirm');
     const modalConfirmMsg    = document.getElementById('modal-confirm-msg');
     const modalConfirmOk     = document.getElementById('modal-confirm-ok');
     const modalConfirmCancel = document.getElementById('modal-confirm-cancel');
 
-    // Muestra el modal y llama a onConfirm() si el usuario acepta
     function showConfirmModal(message, onConfirm) {
-
-        // Fallback al diálogo nativo si el modal no está en el DOM
         if (!modalConfirm) {
             if (window.confirm(message)) { onConfirm(); }
             return;
         }
-
         if (modalConfirmMsg) { modalConfirmMsg.textContent = message; }
         modalConfirm.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -52,100 +108,168 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = '';
             if (modalConfirmOk)     { modalConfirmOk.removeEventListener('click', aceptar); }
             if (modalConfirmCancel) { modalConfirmCancel.removeEventListener('click', cerrar); }
-            modalConfirm.removeEventListener('click', clic_fondo);
-            document.removeEventListener('keydown', tecla_escape);
+            modalConfirm.removeEventListener('click', fondo);
+            document.removeEventListener('keydown', escape);
         }
-
-        function aceptar()       { cerrar(); onConfirm(); }
-        function clic_fondo(e)   { if (e.target === modalConfirm) { cerrar(); } }
-        function tecla_escape(e) { if (e.key === 'Escape') { cerrar(); } }
+        function aceptar()    { cerrar(); onConfirm(); }
+        function fondo(e)     { if (e.target === modalConfirm) cerrar(); }
+        function escape(e)    { if (e.key === 'Escape') cerrar(); }
 
         if (modalConfirmOk)     { modalConfirmOk.addEventListener('click', aceptar); }
         if (modalConfirmCancel) { modalConfirmCancel.addEventListener('click', cerrar); }
-        modalConfirm.addEventListener('click', clic_fondo);
-        document.addEventListener('keydown', tecla_escape);
+        modalConfirm.addEventListener('click', fondo);
+        document.addEventListener('keydown', escape);
     }
 
-    document.querySelectorAll('form[data-confirm]').forEach((form) => {
-        form.addEventListener('submit', (event) => {
+    /* ── Modal de PIN ── */
+    const modalPin   = document.getElementById('modal-pin');
+    const pinInput   = document.getElementById('pin-input');
+    const pinSubmit  = document.getElementById('pin-submit');
+    const pinError   = document.getElementById('pin-error');
+    const pinClose   = document.getElementById('pin-modal-close');
 
-            // Segunda pasada: el usuario ya confirmó, se deja pasar el envío
-            if (form.dataset.confirmed === '1') {
-                delete form.dataset.confirmed;
+    function showPinModal(onSuccess) {
+        if (!modalPin) {
+            /* Sin modal disponible: no bloquear (el servidor valida de todas formas) */
+            onSuccess();
+            return;
+        }
+        if (pinInput)  { pinInput.value = ''; }
+        if (pinError)  { pinError.style.display = 'none'; pinError.textContent = ''; }
+        modalPin.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => pinInput?.focus(), 80);
+
+        function cerrar() {
+            modalPin.style.display = 'none';
+            document.body.style.overflow = '';
+            if (pinSubmit) { pinSubmit.removeEventListener('click', verificar); }
+            if (pinClose)  { pinClose.removeEventListener('click', cerrar); }
+            if (pinInput)  { pinInput.removeEventListener('keydown', tecla); }
+            document.removeEventListener('keydown', escape);
+        }
+
+        async function verificar() {
+            const pin = pinInput?.value?.trim() || '';
+            if (!pin) {
+                mostrarError('Ingresa tu PIN.');
                 return;
             }
+            pinSubmit.disabled = true;
+            pinSubmit.textContent = '...';
 
-            // Primera pasada: interceptar y mostrar el modal de confirmación
-            event.preventDefault();
-            const message = form.getAttribute('data-confirm') || '¿Confirmar operación?';
+            try {
+                const res  = await fetch(PIN_VERIFY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: '_token=' + encodeURIComponent(csrfToken()) + '&pin=' + encodeURIComponent(pin),
+                    credentials: 'same-origin',
+                });
+                const data = await res.json();
 
-            showConfirmModal(message, () => {
-                // Marca el formulario y lo reenvía para que pase el listener
-                form.dataset.confirmed = '1';
+                if (data.ok) {
+                    cerrar();
+                    onSuccess();
+                } else if (data.locked) {
+                    /* Cuenta bloqueada por PIN fallidos: el servidor ya cerró
+                       la sesión; se muestra el aviso y se regresa al login */
+                    mostrarError(data.error || 'Cuenta bloqueada. Sesión cerrada.');
+                    setTimeout(function () {
+                        window.location.href = BASE_URL + 'login';
+                    }, 2500);
+                } else if (data.setup) {
+                    /* PIN no configurado: ir a perfil */
+                    cerrar();
+                    window.location.href = BASE_URL + 'profile';
+                } else {
+                    mostrarError(data.error || 'PIN incorrecto.');
+                    if (pinInput) { pinInput.value = ''; pinInput.focus(); }
+                }
+            } catch {
+                mostrarError('Error de red. Intenta de nuevo.');
+            } finally {
+                if (pinSubmit) {
+                    pinSubmit.disabled = false;
+                    pinSubmit.textContent = 'Verificar';
+                }
+            }
+        }
+
+        function mostrarError(msg) {
+            if (!pinError) { return; }
+            pinError.textContent = msg;
+            pinError.style.display = 'block';
+        }
+
+        function tecla(e) { if (e.key === 'Enter') verificar(); }
+        function escape(e) { if (e.key === 'Escape') cerrar(); }
+
+        if (pinSubmit) { pinSubmit.addEventListener('click', verificar); }
+        if (pinClose)  { pinClose.addEventListener('click', cerrar); }
+        if (pinInput)  { pinInput.addEventListener('keydown', tecla); }
+        document.addEventListener('keydown', escape);
+    }
+
+    /* ── Pipeline unificado: confirmación → PIN → envío ── */
+    document.querySelectorAll('form[data-confirm], form[data-pin-required]').forEach((form) => {
+        const needsConfirm = form.hasAttribute('data-confirm');
+        const needsPin     = form.hasAttribute('data-pin-required');
+
+        form.addEventListener('submit', (e) => {
+            /* Si ya pasó por todo el pipeline, dejar pasar */
+            if (form.dataset.formReady === '1') {
+                delete form.dataset.formReady;
+                return;
+            }
+            e.preventDefault();
+
+            /* Función final: marcar y reenviar */
+            const proceed = () => {
+                form.dataset.formReady = '1';
                 form.requestSubmit();
-            });
+            };
+
+            if (needsConfirm && needsPin) {
+                showConfirmModal(
+                    form.getAttribute('data-confirm') || '¿Confirmar operación?',
+                    () => showPinModal(proceed)
+                );
+            } else if (needsConfirm) {
+                showConfirmModal(
+                    form.getAttribute('data-confirm') || '¿Confirmar operación?',
+                    proceed
+                );
+            } else {
+                showPinModal(proceed);
+            }
         });
     });
 
     /* ---------------------------------------------------------------
      * 2. Validación del tipo de archivo al seleccionar un PDF
-     *
-     * Busca todos los campos <input type="file" accept="application/pdf">.
-     * Cuando el usuario selecciona un archivo, verifica que sea realmente
-     * un PDF (por su tipo MIME o por su extensión .pdf).
-     * Si no es PDF, muestra una alerta y limpia el campo para que el
-     * usuario seleccione un archivo correcto.
-     *
-     * Esta validación es del lado del cliente (navegador) y es
-     * complementaria a la validación del servidor en PHP.
      * --------------------------------------------------------------- */
     document.querySelectorAll('input[type="file"][accept="application/pdf"]').forEach((input) => {
         input.addEventListener('change', () => {
             const file = input.files[0];
-
-            // Si no hay archivo seleccionado, no hacemos nada
-            if (!file) {
-                return;
-            }
-
-            // Verifica por tipo MIME y por extensión del nombre del archivo
+            if (!file) return;
             if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
                 window.alert('Seleccione un archivo PDF valido.');
-                input.value = ''; // Limpia el campo para forzar una nueva selección
+                input.value = '';
             }
         });
     });
 
     /* ---------------------------------------------------------------
      * 3. Filtros con envío automático (auto-filter)
-     *
-     * Busca formularios con el atributo data-auto-filter.
-     * Cuando el usuario escribe en un campo o cambia un selector,
-     * el formulario se envía automáticamente después de 450ms.
-     *
-     * El retraso de 450ms evita enviar el formulario con cada tecla
-     * presionada; espera a que el usuario deje de escribir.
-     *
-     * Se usa para que la lista de documentos se actualice en tiempo real
-     * mientras el usuario escribe en los campos de búsqueda.
      * --------------------------------------------------------------- */
     document.querySelectorAll('form[data-auto-filter]').forEach((form) => {
         const fields = form.querySelectorAll('input, select');
-        let timer = null; // Guarda el temporizador para poder cancelarlo
-
+        let timer = null;
         const submitFilters = () => {
-            // Cancela cualquier envío pendiente antes de iniciar uno nuevo
             window.clearTimeout(timer);
-            timer = window.setTimeout(() => {
-                form.requestSubmit(); // Envía el formulario respetando validaciones HTML
-            }, 450); // Espera 450ms desde el último cambio antes de enviar
+            timer = window.setTimeout(() => form.requestSubmit(), 450);
         };
-
         fields.forEach((field) => {
-            /* Para selectores y campos de fecha se usa el evento 'change'
-             * (solo se dispara cuando el valor cambia al salir del campo).
-             * Para campos de texto se usa 'input'
-             * (se dispara con cada tecla presionada). */
             const eventName = field.tagName === 'SELECT' || field.type === 'date' ? 'change' : 'input';
             field.addEventListener(eventName, submitFilters);
         });
@@ -153,78 +277,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ---------------------------------------------------------------
      * 4. Vista previa del PDF al seleccionar el archivo
-     *
-     * Busca formularios con el atributo data-pdf-preview-form.
-     * Cuando el usuario selecciona un archivo PDF, crea una URL temporal
-     * del archivo en memoria (blob URL) y la carga en el elemento <object>
-     * que actúa como visor de PDF.
-     *
-     * También actualiza el texto del título con el nombre del archivo.
-     * Cuando se navega fuera de la página, libera la memoria del blob URL.
-     *
-     * Se usa en el formulario de creación/edición de documentos
-     * para que el usuario pueda verificar el PDF antes de guardarlo.
      * --------------------------------------------------------------- */
     document.querySelectorAll('[data-pdf-preview-form]').forEach((form) => {
-        // Busca los elementos clave dentro del formulario usando data-attributes
-        const input      = form.querySelector('[data-pdf-preview-input]');   // El <input type="file">
-        const preview    = form.querySelector('[data-pdf-preview]');          // El <object> visor de PDF
-        const emptyState = form.querySelector('[data-pdf-preview-empty]');    // Mensaje "sin PDF"
-        const title      = form.querySelector('[data-pdf-preview-title]');    // Título del archivo
+        const input      = form.querySelector('[data-pdf-preview-input]');
+        const preview    = form.querySelector('[data-pdf-preview]');
+        const emptyState = form.querySelector('[data-pdf-preview-empty]');
+        const title      = form.querySelector('[data-pdf-preview-title]');
+        const trigger    = form.querySelector('[data-pdf-pick]');
+        const fileNameEl = form.querySelector('[data-file-name]');
 
-        let objectUrl = null; // Guarda la URL blob actual para poder limpiarla después
+        let objectUrl = null;
+        if (!input || !preview) return;
 
-        // Si no encuentra los elementos necesarios, no hace nada
-        if (!input || !preview) {
-            return;
+        if (trigger) { trigger.addEventListener('click', () => input.click()); }
+        if (fileNameEl) {
+            input.addEventListener('change', () => {
+                fileNameEl.textContent = input.files[0]?.name ?? 'Sin archivo seleccionado';
+            });
         }
 
-        /* Cuando el usuario selecciona un archivo en el campo PDF */
         input.addEventListener('change', () => {
             const file = input.files[0];
+            if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+            if (!file || input.value === '') return;
+            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) return;
 
-            // Libera la URL blob anterior para liberar memoria del navegador
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
-                objectUrl = null;
-            }
-
-            // Si el campo fue limpiado o no hay archivo válido, no continua
-            if (!file || input.value === '') {
-                return;
-            }
-
-            // Verifica que el archivo sea PDF antes de intentar mostrarlo
-            if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-                return;
-            }
-
-            /* Crea una URL temporal que apunta al archivo en memoria del navegador.
-             * Esta URL solo existe mientras la página esté abierta. */
             objectUrl = URL.createObjectURL(file);
+            const frame = preview.parentElement;
+            const prev  = frame.querySelector('.pdf-dyn-obj');
+            if (prev) prev.remove();
 
-            // Carga el PDF en el elemento <object> asignando su URL
-            preview.setAttribute('data', objectUrl);
+            const dynObj = document.createElement('object');
+            dynObj.className = 'pdf-preview-object pdf-dyn-obj';
+            dynObj.type = 'application/pdf';
+            dynObj.setAttribute('data', objectUrl + '#navpanes=0');
+            frame.appendChild(dynObj);
 
-            // Quita la clase que lo hacía invisible
-            preview.classList.remove('is-empty');
-
-            // Oculta el mensaje "Seleccione un PDF para visualizarlo aquí"
-            if (emptyState) {
-                emptyState.hidden = true;
-            }
-
-            // Actualiza el título con el nombre real del archivo seleccionado
-            if (title) {
-                title.textContent = file.name;
-            }
+            preview.style.display = 'none';
+            if (emptyState) emptyState.style.display = 'none';
+            if (title) title.textContent = file.name;
         });
 
-        /* Cuando el usuario navega fuera de la página (beforeunload),
-         * se libera la URL blob para evitar fugas de memoria. */
         window.addEventListener('beforeunload', () => {
-            if (objectUrl) {
-                URL.revokeObjectURL(objectUrl);
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+        });
+    });
+
+    /* ---------------------------------------------------------------
+     * 5. Vista previa de la foto de perfil/avatar
+     * --------------------------------------------------------------- */
+    document.querySelectorAll('[data-avatar-form]').forEach((form) => {
+        const input   = form.querySelector('[data-avatar-input]');
+        const img     = form.querySelector('[data-avatar-preview]');
+        const nameEl  = form.querySelector('[data-avatar-name]');
+        const trigger = form.querySelector('[data-avatar-pick]');
+
+        if (!input || !img) return;
+        if (trigger) { trigger.addEventListener('click', () => input.click()); }
+
+        let avatarUrl = null;
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            if (nameEl) nameEl.textContent = file ? file.name : 'Sin foto asignada';
+            if (!file || !file.type.startsWith('image/')) return;
+            if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+            avatarUrl = URL.createObjectURL(file);
+            img.src = avatarUrl;
+        });
+
+        window.addEventListener('beforeunload', () => {
+            if (avatarUrl) URL.revokeObjectURL(avatarUrl);
+        });
+    });
+
+    /* ---------------------------------------------------------------
+     * 6. Campos de fecha: abrir el calendario al hacer clic en
+     *    cualquier parte del campo, no solo en el icono pequeño
+     * --------------------------------------------------------------- */
+    document.querySelectorAll('input[type="date"]').forEach((field) => {
+        field.addEventListener('click', () => {
+            // showPicker() abre el calendario nativo en navegadores modernos;
+            // si el navegador no lo soporta, el icono nativo sigue funcionando
+            if (typeof field.showPicker === 'function') {
+                try {
+                    field.showPicker();
+                } catch (e) {
+                    // Algunos navegadores lo bloquean sin gesto del usuario; se ignora
+                }
             }
         });
     });

@@ -33,12 +33,22 @@
 /* Fondo oscuro con grilla estructural sutil */
 body {
     min-height: 100vh;
+    /* dvh mide la altura real visible en el móvil, descontando la barra
+       del navegador que aparece y desaparece al desplazarse */
+    min-height: 100dvh;
     background: var(--bg);
     color: var(--text);
     font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
     font-size: 14.5px;
     overflow-x: hidden;
+    /* Evita que el teléfono agrande el texto por su cuenta al girar la pantalla */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
 }
+
+/* Nada puede ser más ancho que la pantalla: corta el desplazamiento lateral
+   accidental en teléfonos antes de que ocurra */
+img, svg, object, iframe, video, canvas { max-width: 100%; }
 
 body::after {
     content: "";
@@ -85,6 +95,12 @@ a:hover { text-decoration: underline; color: #6fa4d8; }
 }
 .status-pill.blue { color: var(--accent); border-color: rgba(74,130,190,.28); }
 .status-pill.gold { color: var(--gold);   border-color: rgba(184,147,90,.28); }
+
+/* Accesos directos a los diagramas: cada botón con su color tenue,
+   a juego con la paleta apagada de los títulos de los diagramas */
+.status-pill.dim-gold { color: #9d8c60; border-color: rgba(157,140,96,.32); }
+.status-pill.dim-blue { color: #64809f; border-color: rgba(100,128,159,.32); }
+.status-pill.dim-red  { color: #9d6e6e; border-color: rgba(157,110,110,.32); }
 
 .dot {
     width: 5px; height: 5px;
@@ -183,6 +199,26 @@ a:hover { text-decoration: underline; color: #6fa4d8; }
     background: rgba(74,130,190,.12);
     color: #fff;
     text-decoration: none;
+}
+/* Menú activo: fondo sutil con acento dorado en el texto y línea inferior */
+.nav-link.active {
+    background: rgba(74,130,190,.14);
+    color: var(--gold);
+    position: relative;
+}
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: var(--gold);
+    border-radius: 2px 2px 0 0;
+}
+.nav-link.active:hover {
+    background: rgba(74,130,190,.22);
+    color: var(--gold);
 }
 .nav-icon, .user-icon {
     flex: 0 0 auto;
@@ -357,6 +393,22 @@ input::placeholder { color: var(--sub); }
 
 select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235e7498' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; cursor: pointer; }
 
+/* ── Campo de fecha: selector de calendario nativo ── */
+/* color-scheme: dark hace que el navegador dibuje el icono y el
+   calendario emergente en tema oscuro, visibles sobre el fondo
+   de la app (sin esto el icono sale negro y no se distingue) */
+input[type="date"] {
+    color-scheme: dark;
+    cursor: pointer;
+}
+
+/* Icono del calendario: siempre visible y con cursor de mano */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: .7;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
 .checkbox-row { display: flex; flex-direction: row; align-items: center; gap: 10px; }
 .checkbox-row input { min-height: auto; width: auto; }
 
@@ -364,7 +416,7 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .filters {
     display: grid;
     gap: 12px;
-    grid-template-columns: minmax(120px, .7fr) minmax(280px, 2fr) minmax(140px, .8fr) minmax(140px, .8fr) auto auto;
+    grid-template-columns: minmax(120px, .7fr) minmax(280px, 2fr) minmax(140px, .8fr) minmax(140px, .8fr) auto;
     align-items: end;
     margin-bottom: 16px;
     padding: 14px 16px;
@@ -476,7 +528,7 @@ tr:hover td { background: rgba(74,130,190,.04); }
 
 .empty { color: var(--muted); text-align: center; font: 12px/1.6 ui-monospace, monospace; padding: 24px; }
 
-/* ── Panel de login ── */
+/* ── Panel de login (legado, mantenido por compatibilidad) ── */
 .login-outer {
     position: relative;
     z-index: 1;
@@ -545,6 +597,399 @@ tr:hover td { background: rgba(74,130,190,.04); }
 .form-card h1 { margin-bottom: 20px; }
 .form-card label { margin-bottom: 14px; }
 
+/* ── Login v2: diseño seguridad nacional — emblema oficial + título platino ejecutivo ── */
+
+/* Área de fondo del login: altura fija para que todo quepa sin scroll */
+.login-bg {
+    position: relative;
+    z-index: 1;
+    height: calc(100vh - 92px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    overflow-y: auto; /* scroll solo si la pantalla es extremadamente pequeña */
+}
+
+/* Líneas de escaneo horizontales animadas */
+.login-scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(74,130,190,.016) 3px,
+        rgba(74,130,190,.016) 4px
+    );
+    animation: loginScan 12s linear infinite;
+}
+@keyframes loginScan {
+    from { background-position: 0 0; }
+    to   { background-position: 0 200px; }
+}
+
+/* Columna central */
+.login-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Corchetes de esquina — dorados, estética gubernamental */
+.login-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+    animation: loginCornerPulse 4s ease-in-out infinite;
+}
+@keyframes loginCornerPulse {
+    0%, 100% { opacity: .6; }
+    50%       { opacity: .2; }
+}
+.login-corner.tl { top: -6px;    left: -6px;    border-top:    2px solid var(--gold); border-left:  2px solid var(--gold); }
+.login-corner.tr { top: -6px;    right: -6px;   border-top:    2px solid var(--gold); border-right: 2px solid var(--gold); }
+.login-corner.bl { bottom: -6px; left: -6px;    border-bottom: 2px solid var(--gold); border-left:  2px solid var(--gold); }
+.login-corner.br { bottom: -6px; right: -6px;   border-bottom: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+
+/* Contenedor del emblema oficial tipo sello */
+.login-seal-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 8px;
+    animation: sealPulse 5s ease-in-out infinite;
+}
+@keyframes sealPulse {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(184,147,90,.28)); }
+    50%       { filter: drop-shadow(0 0 12px rgba(184,147,90,.60)); }
+}
+.login-seal { width: 52px; height: 52px; }
+
+/* Bloque héroe */
+.login-hero {
+    text-align: center;
+    width: 100%;
+    padding: 0 0 14px;
+}
+
+/* Banda de clasificación con líneas doradas a los lados */
+.login-hero-pre {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font: 700 9px/1 ui-monospace, monospace;
+    letter-spacing: .55em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+}
+.login-hero-pre::before,
+.login-hero-pre::after {
+    content: '';
+    flex: 1 1 24px;
+    max-width: 52px;
+    height: 1px;
+}
+.login-hero-pre::before { background: linear-gradient(90deg, transparent, rgba(184,147,90,.7)); }
+.login-hero-pre::after  { background: linear-gradient(90deg, rgba(184,147,90,.7), transparent); }
+
+/* ── ARCANUM: seguridad nacional — acero frío, austero, gubernamental ── */
+.login-brand-name {
+    margin: 0 0 8px;
+    /* 10% menor que la versión anterior (42→38, 10.5vw→9.5vw, 70→63) */
+    font: 900 clamp(38px, 9.5vw, 63px)/1 ui-monospace, monospace;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    /* Acero frío de grado militar: profundo → plata → blanco frío → profundo */
+    background: linear-gradient(
+        105deg,
+        #1a2a38  0%,
+        #2e4458  6%,
+        #4e6878  14%,
+        #7a98a8  22%,
+        #a8c0cc  30%,
+        #ccdde6  38%,
+        #e4eef4  44%,
+        #f2f7fa  48%,   /* reflexión cenital — máxima luminosidad */
+        #e0eaf0  52%,
+        #b8ccd8  60%,
+        #788898  68%,
+        #2e4050  76%,
+        #1a2c3c  83%,
+        #3a5468  91%,
+        #24384c  100%
+    );
+    background-size: 220% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    /* Sombra de profundidad: halo acerado muy contenido, grave */
+    filter:
+        drop-shadow(0 0 10px rgba(60,100,130,.45))
+        drop-shadow(0 0 30px rgba(60,100,130,.12))
+        drop-shadow(0 4px 12px rgba(0,0,0,.98));
+    animation: govShimmer 7s linear infinite, govGlitch 22s steps(1) infinite;
+    user-select: none;
+}
+
+/* Shimmer lento y preciso: reflexión de luz sobre acero pulido */
+@keyframes govShimmer {
+    0%   { background-position: 220% center; }
+    100% { background-position: 0%   center; }
+}
+
+/* Micro-interferencia mínima: sistema de alta seguridad, no toleran ruido */
+@keyframes govGlitch {
+    0%, 92%, 100% {
+        transform: none;
+        filter: drop-shadow(0 0 10px rgba(60,100,130,.45)) drop-shadow(0 4px 12px rgba(0,0,0,.98));
+    }
+    93% {
+        transform: translateX(-3px);
+        filter: drop-shadow(3px 0 rgba(140,180,200,.35)) drop-shadow(0 4px 12px rgba(0,0,0,.98));
+    }
+    94% {
+        transform: translateX(2px);
+        filter: drop-shadow(-2px 0 rgba(140,180,200,.28)) drop-shadow(0 4px 12px rgba(0,0,0,.98));
+    }
+    95% {
+        transform: none;
+        filter: drop-shadow(0 0 18px rgba(180,210,225,.55)) drop-shadow(0 4px 12px rgba(0,0,0,.98));
+    }
+    96% {
+        transform: none;
+        filter: drop-shadow(0 0 10px rgba(60,100,130,.45)) drop-shadow(0 4px 12px rgba(0,0,0,.98));
+    }
+}
+
+/* Subtítulo descriptivo */
+.login-hero-sub {
+    font: 600 9.5px/1.5 ui-monospace, monospace;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 10px;
+}
+
+/* Etiquetas de clasificación/atributos */
+.login-hero-tags {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.login-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 11px;
+    border: 1px solid var(--line2);
+    font: 700 8px/1 ui-monospace, monospace;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.login-tag.gold {
+    color: var(--gold);
+    border-color: rgba(184,147,90,.32);
+    background: rgba(184,147,90,.05);
+}
+.login-tag.blue {
+    color: var(--accent);
+    border-color: rgba(74,130,190,.32);
+    background: rgba(74,130,190,.05);
+}
+
+/* Tarjeta del formulario de autenticación */
+.login-card-v2 {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid rgba(74,130,190,.18);
+    border-top: 2px solid var(--accent);
+    box-shadow:
+        var(--shadow),
+        0 0 0 1px rgba(74,130,190,.04) inset,
+        0 0 64px rgba(74,130,190,.08);
+}
+
+/* Cabecera de la tarjeta: icono + textos */
+.login-card-v2-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(0,0,0,.3);
+}
+
+/* Icono de escudo de seguridad */
+.login-shield {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    background: rgba(74,130,190,.1);
+    border: 1px solid rgba(74,130,190,.28);
+    color: var(--accent);
+}
+
+.login-card-title {
+    font: 700 11.5px/1.2 ui-monospace, monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #fff;
+}
+.login-card-subtitle {
+    font: 600 9px/1.4 ui-monospace, monospace;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* Cuerpo del formulario: comprimido para que quepa sin scroll */
+.login-card-v2-body { padding: 16px 20px 18px; }
+.login-card-v2-body label { margin-bottom: 12px; }
+
+/* Botón de autenticar: naranja tenue de alerta táctica con pulso de advertencia */
+.login-card-v2-body .btn.primary {
+    width: 100%;
+    justify-content: center;
+    margin-top: 6px;
+    min-height: 38px;
+    font-size: 12px;
+    letter-spacing: .2em;
+    position: relative;
+    overflow: hidden;
+    /* Color gold #b8935a de la etiqueta "Acceso Restringido", aplicado tenue */
+    background: rgba(155, 115, 45, 0.28);
+    border-color: rgba(184, 147, 90, 0.48);
+    color: #b8935a;
+    box-shadow: 0 0 8px rgba(184,147,90,.10), inset 0 1px 0 rgba(220,175,90,.06);
+    animation: btnAlertPulse 4s ease-in-out infinite;
+}
+/* Pulso dorado suave — coherente con la etiqueta "Acceso Restringido" */
+@keyframes btnAlertPulse {
+    0%, 100% { box-shadow: 0 0 6px  rgba(184,147,90,.08), inset 0 1px 0 rgba(220,175,90,.05); }
+    50%       { box-shadow: 0 0 16px rgba(184,147,90,.26), inset 0 1px 0 rgba(220,175,90,.10); }
+}
+.login-card-v2-body .btn.primary:hover {
+    background: rgba(155, 115, 45, 0.52);
+    border-color: rgba(184, 147, 90, 0.78);
+    color: #ccaa68;
+}
+/* Shimmer dorado tenue al pasar el cursor */
+.login-card-v2-body .btn.primary::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -100%;
+    width: 55%;
+    background: linear-gradient(90deg, transparent, rgba(200,165,80,.12), transparent);
+    transform: skewX(-18deg);
+}
+.login-card-v2-body .btn.primary:hover::after {
+    left: 150%;
+    transition: left .55s ease;
+}
+
+/* ── Aviso legal de acceso no autorizado — notice gubernamental comprimido ── */
+.login-warning {
+    width: 100%;
+    margin-top: 10px;
+    border: 1px solid rgba(192,57,43,.32);
+    border-left: 3px solid var(--danger);
+    background: rgba(8,4,4,.55);
+}
+.login-warning-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 13px;
+    border-bottom: 1px solid rgba(192,57,43,.2);
+    background: rgba(192,57,43,.1);
+    font: 700 9px/1 ui-monospace, monospace;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: #e05050;
+}
+.login-warning-body { padding: 10px 14px 11px; }
+.login-warning-body p {
+    font: 10px/1.65 ui-monospace, monospace;
+    color: #3e5068;
+    margin: 0 0 7px;
+    letter-spacing: .005em;
+    text-align: justify;        /* texto justificado estilo notice legal */
+    text-align-last: left;      /* última línea alineada a la izquierda */
+}
+.login-warning-body p:last-child { margin-bottom: 0; }
+.login-warning-body strong { color: #c0392b; font-weight: 700; }
+/* Línea final de aceptación — más discreta */
+.login-warning-foot {
+    font-size: 9.5px !important;
+    color: #2a3a50 !important;
+    border-top: 1px solid rgba(192,57,43,.14);
+    padding-top: 7px;
+    margin-top: 3px;
+    text-align: justify !important;
+}
+
+/* Pie inferior del login */
+.login-footer-v2 {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 2px 0;
+    font: 600 9px/1 ui-monospace, monospace;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--sub);
+}
+
+/* ── Responsive: teléfonos, tablets y pantallas de altura reducida ── */
+
+/* Teléfonos (≤ 520px de ancho) */
+@media (max-width: 520px) {
+    .login-bg { padding: 0 14px; }
+    .login-brand-name { letter-spacing: .08em; }
+    .login-card-v2-body { padding: 14px 14px 16px; }
+    .login-card-v2-head { padding: 9px 14px; }
+    .login-footer-v2 { flex-direction: column; gap: 5px; text-align: center; }
+    .login-seal { width: 42px; height: 42px; }
+    .login-warning-body p { text-align: left; }
+}
+
+/* Tablets (521px – 900px de ancho) */
+@media (min-width: 521px) and (max-width: 900px) {
+    .login-wrap { max-width: 440px; }
+}
+
+/* Pantallas de altura reducida (laptops pequeñas, landscape en tablets) */
+@media (max-height: 680px) {
+    .login-seal { width: 38px; height: 38px; }
+    .login-seal-wrap { margin-bottom: 4px; }
+    .login-hero-pre { margin-bottom: 3px; }
+    .login-hero { padding-bottom: 10px; }
+    .login-hero-sub { margin-bottom: 6px; }
+    .login-hero-tags { gap: 4px; }
+    .login-card-v2-body { padding: 12px 18px 14px; }
+    .login-card-v2-body label { margin-bottom: 8px; }
+    .login-warning-body { padding: 8px 13px 9px; }
+    .login-warning-body p { line-height: 1.55; margin-bottom: 5px; }
+    .login-footer-v2 { padding-top: 6px; }
+}
+
 /* ── Formularios de creación/edición ── */
 .form-grid {
     display: grid;
@@ -580,6 +1025,15 @@ tr:hover td { background: rgba(74,130,190,.04); }
 .pdf-preview-frame { background: var(--bg); min-height: 0; position: relative; }
 .pdf-preview-object { background: var(--bg); border: 0; display: block; height: 100%; min-height: 520px; width: 100%; }
 .pdf-preview-object.is-empty { visibility: hidden; }
+/* <object> creado dinámicamente al seleccionar un PDF nuevo */
+.pdf-dyn-obj {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 520px;
+    border: 0;
+    background: var(--bg);
+}
 .pdf-preview-empty {
     display: grid;
     place-items: center;
@@ -660,26 +1114,791 @@ tr:hover td { background: rgba(74,130,190,.04); }
     background: linear-gradient(90deg, var(--line2), transparent);
 }
 
-/* ── Responsive ── */
-@media (max-width: 900px) {
-    .topbar { grid-template-columns: auto 1fr auto; padding: 0 16px; }
-    .brand-personal { display: none; }
-    .filters { grid-template-columns: 1fr 1fr; }
+/* ── Responsive ──
+   Las reglas de adaptación a teléfono, tablet y laptop viven todas juntas
+   al final del archivo, en la sección "ADAPTACIÓN A PANTALLAS".
+   Se agruparon ahí para que al revisar el comportamiento en un tamaño de
+   pantalla no haya que buscar reglas dispersas por todo el archivo. */
+
+/* ── Catálogos del sistema ── */
+.catalog-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+}
+
+.catalog-section {
+    background: var(--bg2);
+    border: 1px solid var(--line2);
+}
+
+.catalog-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line2);
+    background: rgba(0,0,0,.28);
+    font: 700 11px/1 ui-monospace, monospace;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.catalog-count {
+    margin-left: auto;
+    background: rgba(74,130,190,.14);
+    border: 1px solid rgba(74,130,190,.25);
+    color: var(--accent);
+    font: 700 10px/1 ui-monospace, monospace;
+    padding: 3px 8px;
+    letter-spacing: .08em;
+}
+
+.catalog-section .table-wrap {
+    border: none;
+    border-bottom: 1px solid var(--line2);
+    overflow-x: visible;
+}
+
+/* Anula el min-width global de 1040px y el table-layout fijo */
+.catalog-section table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+}
+
+/* El área de acciones no necesita mínimo en tablas compactas */
+.catalog-section .actions {
+    min-width: 0;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+}
+
+
+/* Las celdas de catálogo no deben romper el layout */
+.catalog-section th,
+.catalog-section td {
+    padding: 9px 12px;
+    word-break: break-word;
+}
+
+.catalog-add-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(74,130,190,.04);
+    border-top: 1px solid var(--line2);
+}
+
+.catalog-add-label {
+    font: 600 10px/1 ui-monospace, monospace;
+    letter-spacing: .08em;
+    color: var(--muted);
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.catalog-add-form input {
+    min-height: 34px;
+    font-size: 13px;
+    padding: 6px 10px;
+}
+
+/* ── Selector de archivo personalizado ── */
+/* display:none oculta el input nativo por completo sin que las reglas globales
+   de min-height/width lo contrarresten; el label[for] sigue abriendo el diálogo
+   y el evento change sigue disparando normalmente */
+.file-input-hidden { display: none; }
+.file-field { display: grid; gap: 6px; }
+.file-field-lbl {
+    font: 600 10.5px/1 ui-monospace, monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.file-optional { color: var(--sub); font-size: 9px; margin-left: 4px; }
+.file-field-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.file-btn {
+    cursor: pointer;
+    background: rgba(184,147,90,.12);
+    border-color: rgba(184,147,90,.45);
+    color: var(--gold);
+}
+.file-btn:hover {
+    background: rgba(184,147,90,.22);
+    border-color: rgba(184,147,90,.7);
+    color: #d4a96a;
+}
+.file-name {
+    font: 12px/1.4 ui-monospace, monospace;
+    color: var(--muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 280px;
+}
+
+/* ── Formulario de usuario con avatar ── */
+.user-form-layout {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: 230px minmax(400px, 1fr);
+    align-items: start;
+}
+.avatar-panel {
+    background: var(--bg2);
+    border: 1px solid var(--line2);
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+}
+.avatar-panel-head {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--line2);
+}
+.avatar-panel-head strong {
+    color: var(--text);
+    font: 600 12px/1 ui-monospace, monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.avatar-preview-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 20px 24px;
+}
+.avatar-preview-img {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--line3);
+    background: var(--bg3);
+    display: block;
+    transition: border-color .2s;
+}
+.avatar-preview-img:hover { border-color: var(--accent); }
+.avatar-preview-name {
+    color: var(--muted);
+    font: 700 9.5px/1.4 ui-monospace, monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    text-align: center;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.avatar-hint {
+    color: var(--sub);
+    font: 10px/1.6 ui-monospace, monospace;
+    letter-spacing: .04em;
+    text-align: center;
+    margin: 0;
+}
+.user-fields { align-self: start; }
+
+/* Miniatura circular en tabla de usuarios */
+.user-avatar-thumb {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--line2);
+    background: var(--bg3);
+    flex-shrink: 0;
+}
+
+/* Responsive: apila en pantallas pequeñas */
+@media (max-width: 720px) {
+    .user-form-layout { grid-template-columns: 1fr; }
+    .avatar-panel { max-width: 100%; }
+}
+
+/* ── Página de perfil personal ── */
+.profile-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 220px 1fr 1fr;
+    align-items: stretch;
+}
+.profile-card {
+    background: var(--bg2);
+    border: 1px solid var(--line2);
+    overflow: hidden;
+}
+.profile-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line2);
+}
+.profile-card-head strong {
+    font: 600 12px/1 ui-monospace, monospace;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text);
+}
+.profile-card-body { padding: 0; }
+.profile-form { padding: 18px 16px; gap: 14px; border: 0; background: transparent; }
+.profile-card-actions { display: flex; gap: 10px; }
+.profile-hint {
+    font: 11px/1.7 ui-monospace, monospace;
+    color: var(--sub);
+    margin: 0;
+    padding: 10px 12px;
+    background: rgba(74,130,190,.04);
+    border: 1px solid var(--line2);
+}
+
+/* Avatar en la nav */
+.nav-avatar {
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--line2);
+    background: var(--bg3);
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BOTÓN DE MENÚ Y CAJÓN DE NAVEGACIÓN (para teléfono)
+   ══════════════════════════════════════════════════════════════════
+
+   En pantallas grandes el menú se ve completo en la barra superior.
+   En teléfono no cabe, así que se guarda en un cajón que se desliza
+   desde la derecha al tocar el botón de las tres rayas.
+
+   Truco importante: en pantallas grandes el cajón usa "display: contents",
+   que hace que la caja contenedora desaparezca para el diseño y sus hijos
+   (el menú y el bloque del usuario) se acomoden en la barra superior
+   exactamente igual que antes. Así el escritorio no cambia en nada.
+   ══════════════════════════════════════════════════════════════════ */
+
+.nav-drawer { display: contents; }
+
+/* Botón de las tres rayas: oculto salvo en teléfono */
+.nav-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--line2);
+    color: #a8bfd0;
+    cursor: pointer;
+}
+.nav-toggle:hover { border-color: var(--line3); color: #fff; }
+.nav-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Las tres rayas del botón */
+.nav-toggle-bars { display: block; width: 19px; }
+.nav-toggle-bars span {
+    display: block;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform .22s ease, opacity .18s ease;
+}
+.nav-toggle-bars span + span { margin-top: 4px; }
+
+/* Con el cajón abierto las rayas se cruzan formando una equis */
+.nav-toggle[aria-expanded="true"] .nav-toggle-bars span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.nav-toggle[aria-expanded="true"] .nav-toggle-bars span:nth-child(2) { opacity: 0; }
+.nav-toggle[aria-expanded="true"] .nav-toggle-bars span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+/* Fondo oscuro que cubre la página mientras el cajón está abierto */
+.nav-scrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(0,0,0,.66);
+    backdrop-filter: blur(2px);
+}
+.nav-scrim.open { display: block; }
+
+/* Botones de acción de los filtros (Limpiar / Nuevo) agrupados,
+   para que no se estiren a lo ancho al apilarse en teléfono */
+.filters-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ADAPTACIÓN A PANTALLAS
+   ══════════════════════════════════════════════════════════════════
+
+   Tres tamaños de referencia:
+
+     • Teléfono ....... hasta 640 px
+     • Tablet ......... de 641 px a 1024 px
+     • Laptop y PC .... desde 1025 px  (diseño base del archivo)
+
+   Se agregan además dos ajustes por tipo de dispositivo, no por ancho:
+   uno para pantallas táctiles (botones más grandes) y otro para
+   pantallas de poca altura (laptops pequeñas y tablets acostadas).
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ───────────────────────────────────────────────────────────
+   LAPTOP ESTRECHA (901 px – 1120 px)
+   El menú horizontal completo apenas cabe: se compacta un poco
+   en lugar de dejar que se desborde.
+   ─────────────────────────────────────────────────────────── */
+@media (min-width: 901px) and (max-width: 1120px) {
+    .nav-link, .logout-link { padding: 7px 8px; font-size: 11.5px; gap: 5px; }
+    .user-name { max-width: 110px; }
+    /* Se conserva el logo de C3r0D4y y solo se oculta el texto */
+    .brand-personal span:first-child { display: none; }
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   TABLET (641 px – 1024 px)
+   La barra superior pasa a dos renglones: arriba la marca, el
+   usuario y el logo; abajo el menú completo aprovechando el ancho.
+   ─────────────────────────────────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .topbar {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas:
+            "marca usuario logo"
+            "menu  menu    menu";
+        row-gap: 2px;
+        gap: 12px;
+        padding: 8px 16px;
+        min-height: 0;
+    }
+    .brand          { grid-area: marca; }
+    .user-menu      { grid-area: usuario; justify-self: end; }
+    .brand-personal { grid-area: logo; grid-column: auto; }
+    .nav {
+        grid-area: menu;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 2px;
+    }
+    .nav-link, .logout-link { padding: 7px 9px; font-size: 11.5px; }
+
+    /* Solo el logo de C3r0D4y, sin el texto, para ganar espacio */
+    .brand-personal span:first-child { display: none; }
+
+    .filters      { grid-template-columns: 1fr 1fr; }
     .logs-filters { grid-template-columns: 1fr 1fr; }
+    .filters-actions { grid-column: 1 / -1; }
+
     .document-form-layout { grid-template-columns: 1fr; }
+    /* Primero los campos y después la vista previa: en vertical
+       conviene capturar los datos sin tener que bajar la pantalla */
+    .document-form-layout .document-fields   { order: 1; }
+    .document-form-layout .pdf-preview-panel { order: 2; }
+
     .detail-grid { grid-template-columns: 1fr 1fr; }
     .detail-grid div { border-bottom: 1px solid var(--line2); }
     .detail-grid div:nth-child(2n) { border-right: 0; }
+
+    .profile-grid  { grid-template-columns: 1fr 1fr; }
+    .catalog-grid  { grid-template-columns: 1fr; gap: 18px; }
+    .user-form-layout { grid-template-columns: 1fr; }
+
+    /* La tabla se ajusta al ancho real de la tablet en lugar de exigir
+       1040 px y dejar la columna de Acciones fuera de la pantalla.
+       Los botones se acomodan en dos renglones si no caben en uno. */
+    table { min-width: 0; }
+    th, td { padding: 10px 11px; }
+    /* Las palabras solo se parten si de verdad no caben, para no ver
+       cortes feos como "Coordinació / n Regional" */
+    td { overflow-wrap: break-word; }
+
+    /* Los botones de acción se apilan a lo ancho de su columna: se ve
+       ordenado y cada uno queda con buena zona de toque */
+    .actions {
+        min-width: 0;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        white-space: normal;
+        gap: 6px;
+    }
+    .actions form { width: 100%; }
+    .actions .btn { width: 100%; justify-content: center; }
+
+    /* Reparto de anchos pensado para tablet: la columna de Tipo
+       necesita espacio suficiente para que la etiqueta más larga
+       ("CONFIDENCIAL") no se monte sobre los botones de al lado */
+    .col-number  { width: 11%; }
+    .col-subject { width: 23%; }
+    .col-date    { width: 13%; }
+    .col-sender  { width: 17%; }
+    .col-type    { width: 16%; }
+    .col-actions { width: 20%; }
+    .badge { font-size: 9px; letter-spacing: .06em; padding: 3px 6px; }
+
+    .container { padding: 22px 18px; }
 }
 
-@media (max-width: 620px) {
-    .topbar { grid-template-columns: 1fr auto; }
-    .nav { display: none; }
-    .filters, .form-grid { grid-template-columns: 1fr; }
-    .page-head { flex-direction: column; }
-    .container { padding: 18px 16px; }
+
+/* ───────────────────────────────────────────────────────────
+   TELÉFONO (hasta 640 px)
+   ─────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+
+    /* ── Barra de estado en dos renglones ──
+          Los tres accesos a diagramas no caben junto al reloj en una
+          pantalla de teléfono: se quedaban cortados a media palabra.
+          Ahora el nombre del sistema y el reloj ocupan el primer
+          renglón, y los diagramas el segundo, donde se recorren de
+          lado con el dedo si no caben. */
+    .statusbar {
+        gap: 6px 10px;
+        padding: 6px 12px;
+        flex-wrap: wrap;
+    }
+    .statusbar-right {
+        order: 1;
+        width: 100%;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    /* El nombre del operador ya aparece dentro del menú */
+    .statusbar-right span:first-child { display: none; }
+
+    .statusbar-left {
+        order: 2;
+        width: 100%;
+        gap: 8px;
+        overflow-x: auto;
+        /* Oculta la barra de desplazamiento sin quitar el gesto de arrastre */
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .statusbar-left::-webkit-scrollbar { display: none; }
+    .status-pill { white-space: nowrap; font-size: 9px; padding: 4px 8px; flex-shrink: 0; }
+
+    /* ── Barra superior: marca, logo y botón de menú ── */
+    .topbar {
+        grid-template-columns: auto 1fr auto auto;
+        gap: 10px;
+        padding: 0 12px;
+        min-height: 56px;
+    }
+    .brand { font-size: 13.5px; letter-spacing: .13em; }
+    /* Se fija también la fila, no solo la columna: el botón de menú
+       aparece antes en el HTML y, sin grid-row, el logo se iba solo
+       a un segundo renglón por debajo de la barra */
+    .brand-personal {
+        grid-row: 1;
+        grid-column: 3;
+        justify-self: end;
+        gap: 0;
+    }
+    /* Solo queda el logo circular de C3r0D4y */
+    .brand-personal span:first-child { display: none; }
+    .nav-toggle { display: inline-flex; grid-row: 1; grid-column: 4; }
+
+    /* ── Cajón lateral de navegación ── */
+    .nav-drawer {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(300px, 86vw);
+        z-index: 60;
+        background: var(--bg2);
+        border-left: 1px solid var(--line3);
+        box-shadow: -18px 0 48px rgba(0,0,0,.6);
+        padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        /* Fuera de la pantalla hasta que se abre */
+        transform: translateX(102%);
+        /* Oculto para lectores de pantalla y para el tabulador mientras
+           está cerrado. La visibilidad cambia al terminar el deslizamiento
+           (retraso de .24s) para que el cierre se alcance a ver */
+        visibility: hidden;
+        transition: transform .24s ease, visibility 0s linear .24s;
+    }
+    .nav-drawer.open {
+        transform: translateX(0);
+        visibility: visible;
+        /* Al abrir se muestra de inmediato, sin retraso */
+        transition: transform .24s ease, visibility 0s linear 0s;
+    }
+
+    /* Menú vertical dentro del cajón */
+    .nav {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        gap: 2px;
+    }
+    .nav-link {
+        justify-content: flex-start;
+        padding: 12px 12px;
+        font-size: 12.5px;
+        min-height: 48px;
+    }
+    /* En vertical la línea inferior del elemento activo se ve
+       mejor como una barra a la izquierda */
+    .nav-link.active::after {
+        left: 0;
+        right: auto;
+        top: 6px;
+        bottom: 6px;
+        width: 2px;
+        height: auto;
+        border-radius: 0 2px 2px 0;
+    }
+
+    /* Bloque del usuario al pie del cajón */
+    .user-menu {
+        margin-top: auto;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line2);
+    }
+    .user-name { max-width: none; }
+    .logout-link { justify-content: center; min-height: 46px; font-size: 12px; }
+
+    /* ── Contenido general ── */
+    .container { padding: 16px 12px; }
+    .page-head { flex-direction: column; align-items: stretch; gap: 12px; }
+    .page-head h1 { font-size: 19px; }
+    .button-row { flex-wrap: wrap; }
+
+    /* ── Filtros: una columna, botones lado a lado ── */
+    .filters, .logs-filters, .form-grid {
+        grid-template-columns: 1fr;
+        padding: 12px;
+        gap: 10px;
+    }
+    .filters-actions .btn { flex: 1; justify-content: center; }
+
+    /* ── Formulario de expediente ── */
+    .document-form-layout { grid-template-columns: 1fr; gap: 14px; }
+    .document-form-layout .document-fields   { order: 1; }
+    .document-form-layout .pdf-preview-panel { order: 2; }
+    .pdf-preview-panel { grid-template-rows: auto minmax(300px, 46vh); min-height: 0; }
+    .pdf-preview-object, .pdf-dyn-obj { min-height: 300px; }
+    .pdf-preview-head { flex-wrap: wrap; gap: 4px; padding: 10px 12px; }
+    .pdf-preview-head span { max-width: 100%; }
+    .form-actions { flex-direction: column; align-items: stretch; }
+    .form-actions .btn { justify-content: center; }
+    .file-field-row { gap: 8px; }
+    .file-name { max-width: 100%; }
+
+    /* ── Detalle de expediente ── */
     .detail-grid { grid-template-columns: 1fr; }
-    .detail-grid div { border-right: 0; }
-    .pdf-preview-panel { grid-template-rows: auto minmax(360px, 55vh); min-height: 420px; }
-    .pdf-preview-object { min-height: 360px; }
+    .detail-grid div { border-right: 0; border-bottom: 1px solid var(--line2); }
+    .detail-grid div:last-child { border-bottom: 0; }
+    .pdf-viewer { height: 58vh; height: 58dvh; min-height: 320px; }
+
+    /* ── Otras secciones ── */
+    .catalog-grid     { grid-template-columns: 1fr; gap: 16px; }
+    .profile-grid     { grid-template-columns: 1fr; }
+    .user-form-layout { grid-template-columns: 1fr; }
+    .catalog-add-form { flex-wrap: wrap; }
+    .catalog-add-form .btn { flex: 1; justify-content: center; }
+    .avatar-preview-img { width: 108px; height: 108px; }
+
+    /* ══════════════════════════════════════════════════════
+       TABLAS EN FORMATO DE FICHA
+       ══════════════════════════════════════════════════════
+       En una pantalla de teléfono una tabla de seis columnas
+       obliga a arrastrar de lado para leer un solo renglón.
+       Aquí cada renglón se convierte en una ficha apilada:
+       el encabezado de la columna se muestra a la izquierda de
+       cada dato, tomándolo del atributo data-label de la celda.
+       ══════════════════════════════════════════════════════ */
+    .table-wrap {
+        overflow-x: visible;
+        background: transparent;
+        border: 0;
+    }
+    table {
+        display: block;
+        min-width: 0;
+        width: 100%;
+        table-layout: auto;
+    }
+    /* El encabezado se oculta a la vista pero sigue disponible
+       para los lectores de pantalla */
+    thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    tbody { display: block; }
+    tr {
+        display: block;
+        background: var(--bg2);
+        border: 1px solid var(--line2);
+        margin-bottom: 10px;
+    }
+    tr:hover td { background: transparent; }
+    td {
+        display: block;
+        width: auto;
+        border-bottom: 1px solid var(--line);
+        padding: 10px 13px;
+        font-size: 13.5px;
+    }
+    tr td:last-child { border-bottom: 0; }
+
+    /* Celdas con etiqueta: nombre de la columna a la izquierda */
+    td[data-label] {
+        display: grid;
+        grid-template-columns: minmax(84px, 34%) 1fr;
+        gap: 12px;
+        align-items: start;
+    }
+    td[data-label]::before {
+        content: attr(data-label);
+        font: 600 9.5px/1.6 ui-monospace, monospace;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: var(--sub);
+    }
+
+    /* Los botones de acción se explican solos: no llevan etiqueta */
+    td.actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        min-width: 0;
+        gap: 8px;
+        padding: 12px 13px;
+        background: rgba(74,130,190,.04);
+    }
+    td.actions::before { display: none; }
+    td.actions .btn, td.actions form { flex: 1 1 auto; }
+    td.actions .btn { justify-content: center; }
+
+    /* Mensaje de "sin resultados" */
+    td.empty { display: block; padding: 22px 14px; }
+    td.empty::before { display: none; }
+
+    /* Las tablas de catálogos usan el mismo formato de ficha */
+    .catalog-section .table-wrap { border-bottom: 0; }
+    .catalog-section td { padding: 10px 13px; }
+
+    /* ── Ventanas de diagramas: caben a lo ancho y se recorren
+          en vertical sin desbordar la pantalla ── */
+    #modal-diagram > div,
+    #modal-session > div,
+    #modal-er > div {
+        margin: 12px auto;
+        padding: 0 10px 32px;
+    }
+
+    /* Un diagrama técnico es ancho por naturaleza y hay cajas que no
+       alcanzan a reacomodarse en una pantalla muy angosta. Se permite
+       arrastrar la ventana también de lado, no solo hacia abajo, para
+       que ninguna parte del esquema quede inalcanzable. */
+    #modal-diagram,
+    #modal-session,
+    #modal-er {
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   AVISOS EN PANTALLA ANGOSTA (hasta 1024 px)
+
+   El aviso es una caja flexible, y eso hace que cada trozo de texto
+   suelto entre el icono y las palabras en negrita se trate como una
+   columna aparte. Con espacio de sobra no se nota, pero al angostarse
+   la frase se parte en bloques y se vuelve ilegible.
+
+   Al pasarlo a caja normal, el icono y el texto vuelven a fluir como
+   un párrafo corrido y la frase se lee de principio a fin.
+   ─────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .alert {
+        display: block;
+        line-height: 1.65;
+    }
+    .alert svg {
+        display: inline-block;
+        vertical-align: -2px;
+        margin-right: 7px;
+    }
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   PANTALLAS TÁCTILES (teléfonos y tablets)
+   Se aplica por tipo de dispositivo, no por ancho: agranda las
+   zonas de toque a unos 44 px, que es el mínimo cómodo para el
+   dedo, y sube el texto de los campos a 16 px porque por debajo
+   de esa medida el iPhone hace acercamiento solo al escribir.
+   ─────────────────────────────────────────────────────────── */
+@media (pointer: coarse) {
+    .btn {
+        min-height: 44px;
+        padding: 11px 16px;
+    }
+    .btn.soft {
+        min-height: 40px;
+        padding: 10px 14px;
+        font-size: 11.5px;
+    }
+    .nav-link, .logout-link { min-height: 44px; }
+    .status-pill { min-height: 30px; }
+    input, select, textarea {
+        min-height: 46px;
+        font-size: 16px;
+    }
+    .checkbox-row input { min-height: 22px; width: 22px; height: 22px; }
+    .catalog-add-form input { min-height: 44px; }
+    .link-button { padding: 6px 0; }
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   PANTALLAS DE POCA ALTURA
+   Laptops pequeñas y tablets acostadas: se recortan los visores
+   de PDF para que los botones no queden fuera de la vista.
+   ─────────────────────────────────────────────────────────── */
+@media (max-height: 620px) and (orientation: landscape) {
+    .pdf-viewer { height: 70vh; height: 70dvh; min-height: 260px; }
+    .pdf-preview-panel { grid-template-rows: auto minmax(260px, 60vh); min-height: 0; }
+    .pdf-preview-object, .pdf-dyn-obj { min-height: 260px; }
+}
+
+
+/* ───────────────────────────────────────────────────────────
+   IMPRESIÓN Y MOVIMIENTO REDUCIDO
+   Si el usuario pidió en su sistema menos animación, se respeta.
+   ─────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
 }

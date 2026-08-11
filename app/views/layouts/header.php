@@ -6,6 +6,17 @@
 
 $user = Auth::user();
 
+/* Detecta la sección activa comparando el primer segmento de la ruta actual */
+(function () {
+    $uri  = trim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '', '/');
+    $base = trim(parse_url(BASE_URL, PHP_URL_PATH) ?? '', '/');
+    if ($base !== '' && str_starts_with($uri, $base)) {
+        $uri = trim(substr($uri, strlen($base)), '/');
+    }
+    $GLOBALS['_nav_section'] = strtok($uri, '/') ?: 'documents';
+})();
+$navSection = $GLOBALS['_nav_section'];
+
 $scheme    = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
 $host      = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $canonical = htmlspecialchars(
@@ -31,17 +42,21 @@ $description = e('Sistema cifrado de gestión de expedientes clasificados. Acces
     <link rel="icon" type="image/png" href="<?= e(url('assets/img/favicon.png')) ?>">
     <link rel="apple-touch-icon" href="<?= e(url('assets/img/icon.png')) ?>">
     <link rel="preload" as="image" href="<?= e(url('assets/img/logo.webp')) ?>" type="image/webp">
-    <link rel="stylesheet" href="<?= e(url('assets/css/app.min.css')) ?>">
+    <link rel="stylesheet" href="<?= e(url('assets/css/app.min.css')) ?>?v=<?= filemtime(APP_ROOT . '/public/assets/css/app.min.css') ?>">
+    <!-- URL base de la app: el JavaScript la usa para armar rutas correctamente -->
+    <meta name="base-url" content="<?= e(url('')) ?>">
+    <?php if (Auth::check()): ?>
+    <meta name="csrf-token" content="<?= e(Csrf::token()) ?>">
+    <?php endif; ?>
 </head>
 <body>
 
 <!-- Barra de estado táctica: indicadores del sistema y reloj -->
 <div class="statusbar">
     <div class="statusbar-left">
-        <span class="status-pill blue"><span class="dot"></span>CLASIFICADO</span>
-        <span class="status-pill gold"><span class="dot"></span>CIFRADO AES-256</span>
-        <span class="status-pill">ACCESO RESTRINGIDO</span>
-        <button id="btn-diagram" class="status-pill" style="cursor:pointer;background:none;font:inherit;color:inherit">DIAGRAMA DE CIFRADO</button>
+        <button id="btn-diagram" class="status-pill dim-gold" style="cursor:pointer;background:none;font:inherit">DIAGRAMA DE CIFRADO</button>
+        <button id="btn-session" class="status-pill dim-blue" style="cursor:pointer;background:none;font:inherit">DIAGRAMA DE SESIÓN</button>
+        <button id="btn-er" class="status-pill dim-red" style="cursor:pointer;background:none;font:inherit">DIAGRAMA ENTIDAD-RELACIÓN</button>
     </div>
     <div class="statusbar-right">
         <?php if ($user): ?>
@@ -58,15 +73,44 @@ $description = e('Sistema cifrado de gestión de expedientes clasificados. Acces
     <a class="brand" href="<?= e(url('documents')) ?>"><span>ARC</span>ANUM</a>
 
     <?php if ($user): ?>
+        <!--
+            Botón de las tres rayas: solo se ve en teléfono.
+            aria-expanded le indica al lector de pantalla si el menú
+            está abierto o cerrado; el JS del pie lo mantiene al día.
+        -->
+        <button class="nav-toggle"
+                id="nav-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="nav-drawer"
+                aria-label="Abrir menú de navegación">
+            <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+        </button>
+
+        <!--
+            Cajón de navegación. En pantallas grandes esta caja no
+            existe para el diseño (display:contents en el CSS) y el
+            menú se ve tal cual en la barra; en teléfono se convierte
+            en un panel que se desliza desde la derecha.
+        -->
+        <div class="nav-drawer" id="nav-drawer">
         <nav class="nav" aria-label="Navegación principal">
-            <a class="nav-link" href="<?= e(url('documents')) ?>">
+            <a class="nav-link<?= $navSection === 'profile' ? ' active' : '' ?>" href="<?= e(url('profile')) ?>">
+                <img src="<?= e(url('users/' . $user['id'] . '/avatar')) ?>"
+                     onerror="this.onerror=null;this.src='<?= e(url('assets/img/avatar-default.svg')) ?>'"
+                     alt=""
+                     class="nav-avatar"
+                     width="22" height="22">
+                <span>Mi Perfil</span>
+            </a>
+            <a class="nav-link<?= $navSection === 'documents' ? ' active' : '' ?>" href="<?= e(url('documents')) ?>">
                 <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 2h8l5 5v15H6z"/><path d="M14 2v6h5"/><path d="M9 13h6"/><path d="M9 17h6"/>
                 </svg>
                 <span>Expedientes</span>
             </a>
             <?php if ($user['role'] === 'admin'): ?>
-                <a class="nav-link" href="<?= e(url('users')) ?>">
+                <a class="nav-link<?= $navSection === 'users' ? ' active' : '' ?>" href="<?= e(url('users')) ?>">
                     <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                         <circle cx="9" cy="7" r="4"/>
@@ -74,11 +118,17 @@ $description = e('Sistema cifrado de gestión de expedientes clasificados. Acces
                     </svg>
                     <span>Operadores</span>
                 </a>
-                <a class="nav-link" href="<?= e(url('logs')) ?>">
+                <a class="nav-link<?= $navSection === 'logs' ? ' active' : '' ?>" href="<?= e(url('logs')) ?>">
                     <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M3 3v18h18"/><path d="M7 14l3-3 4 4 5-7"/>
                     </svg>
                     <span>Bitácora</span>
+                </a>
+                <a class="nav-link<?= $navSection === 'catalogs' ? ' active' : '' ?>" href="<?= e(url('catalogs')) ?>">
+                    <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 6h16"/><path d="M4 10h16"/><path d="M4 14h10"/><path d="M4 18h6"/>
+                    </svg>
+                    <span>Catálogos</span>
                 </a>
             <?php endif; ?>
         </nav>
@@ -100,6 +150,7 @@ $description = e('Sistema cifrado de gestión de expedientes clasificados. Acces
                 <span>Salir</span>
             </a>
         </div>
+        </div><!-- /nav-drawer -->
     <?php endif; ?>
 
     <a class="brand-personal" href="/" aria-label="C3r0D4y Cyber Defense">
@@ -112,6 +163,16 @@ $description = e('Sistema cifrado de gestión de expedientes clasificados. Acces
         </span>
     </a>
 </div>
+
+<?php if ($user): ?>
+<!--
+    Capa oscura que cubre la página mientras el cajón está abierto.
+    Va dentro de <header> a propósito: así comparte contexto de apilado
+    con el cajón y siempre queda por debajo de él, nunca encima.
+    Al tocarla se cierra el menú.
+-->
+<div class="nav-scrim" id="nav-scrim" hidden></div>
+<?php endif; ?>
 </header>
 
 <!-- Contenido principal -->

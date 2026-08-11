@@ -6,10 +6,10 @@
 -- en base64 (formato: ENC:<base64(IV+TAG+CT)>).
 --
 -- Ejecutar UNA SOLA VEZ sobre la BD existente:
---   mysql -u root -p archivo_documental < database/migrate_encrypt.sql
+--   mysql -u root -p arcanum < database/migrate_encrypt.sql
 -- =====================================================================
 
-USE archivo_documental;
+USE arcanum;
 
 -- Los índices BTREE no funcionan en columnas TEXT sin prefijo;
 -- se eliminan ya que la búsqueda ahora se hace en PHP tras descifrar.
@@ -25,4 +25,4 @@ ALTER TABLE documents
     MODIFY COLUMN original_file_name MEDIUMTEXT NOT NULL;
 
 -- Renombra la base de datos a arcanum_documental (opcional)
--- ALTER DATABASE archivo_documental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- ALTER DATABASE arcanum CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

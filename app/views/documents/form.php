@@ -24,7 +24,8 @@ $previewTitle = $isEdit
       method="post"
       action="<?= e($action) ?>"
       enctype="multipart/form-data"
-      data-pdf-preview-form>
+      data-pdf-preview-form
+      data-pin-required>
 
     <?= Csrf::field() ?>
 
@@ -36,7 +37,7 @@ $previewTitle = $isEdit
         </div>
         <div class="pdf-preview-frame">
             <?php if ($previewUrl !== ''): ?>
-                <object data="<?= e($previewUrl) ?>"
+                <object data="<?= e($previewUrl) ?>#navpanes=0"
                         type="application/pdf"
                         data-pdf-preview
                         class="pdf-preview-object">
@@ -66,7 +67,18 @@ $previewTitle = $isEdit
         </label>
 
         <label>Remitente
-            <input name="sender" value="<?= $value('sender') ?>" required>
+            <?php if (!empty($senders)): ?>
+                <select name="sender" required>
+                    <option value="">Seleccione remitente</option>
+                    <?php foreach ($senders as $sender): ?>
+                        <?php $sel = old('sender', $document['sender'] ?? '') === $sender ? 'selected' : ''; ?>
+                        <option value="<?= e($sender) ?>" <?= $sel ?>><?= e($sender) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            <?php else: ?>
+                <input name="sender" value="<?= $value('sender') ?>" required
+                       placeholder="Sin remitentes en catálogo — contacte al administrador">
+            <?php endif; ?>
         </label>
 
         <label>Clasificación / Tipo
@@ -79,14 +91,29 @@ $previewTitle = $isEdit
             </select>
         </label>
 
-        <label class="wide">Archivo PDF <?= $requiresFile ? '' : '<span style="color:var(--sub);font-size:9px">(OPCIONAL)</span>' ?>
-            <input type="file"
-                   name="pdf"
-                   accept="application/pdf"
-                   <?= $requiresFile ? 'required' : '' ?>
-                   data-pdf-preview-input
-                   style="padding:10px;cursor:pointer">
-        </label>
+        <div class="wide file-field">
+            <span class="file-field-lbl">
+                Archivo PDF
+                <?= $requiresFile ? '' : '<span class="file-optional">(OPCIONAL)</span>' ?>
+            </span>
+            <div class="file-field-row">
+                <button type="button" class="btn file-btn" data-pdf-pick>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <line x1="9" y1="15" x2="15" y2="15"/>
+                    </svg>
+                    Seleccionar PDF
+                </button>
+                <span class="file-name" data-file-name>Sin archivo seleccionado</span>
+                <input type="file"
+                       name="pdf"
+                       accept="application/pdf"
+                       data-pdf-preview-input
+                       style="display:none">
+            </div>
+        </div>
 
         <?php if ($isEdit): ?>
             <div class="wide" style="font:10px/1.5 ui-monospace,monospace;color:var(--muted);padding:8px 10px;background:rgba(74,130,190,.05);border:1px solid var(--line2)">

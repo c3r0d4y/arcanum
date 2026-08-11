@@ -25,13 +25,13 @@
 -- Campos sensibles (number, subject, sender, original_file_name) se almacenan
 -- cifrados con AES-256-GCM. Formato: ENC:<base64(IV+TAG+CT)>
 
-CREATE DATABASE IF NOT EXISTS archivo_documental
+CREATE DATABASE IF NOT EXISTS arcanum
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
 -- Selecciona la base de datos para que las instrucciones siguientes
 -- se ejecuten dentro de ella.
-USE archivo_documental;
+USE arcanum;
 
 -- =====================================================================
 -- TABLA: users
@@ -73,17 +73,18 @@ CREATE TABLE IF NOT EXISTS documents (
     -- Identificador único del documento
     id                 INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 
-    -- Folio cifrado AES-256-GCM (MEDIUMTEXT para datos cifrados en base64)
-    number             MEDIUMTEXT NOT NULL,
+    -- Folio en claro: se guarda sin cifrar para poder buscarlo
+    -- directamente con SQL (índice idx_documents_number)
+    number             VARCHAR(120) NOT NULL,
 
-    -- Asunto cifrado AES-256-GCM
-    subject            MEDIUMTEXT NOT NULL,
+    -- Asunto en claro: permite búsquedas rápidas en SQL
+    subject            VARCHAR(255) NOT NULL,
 
     -- Fecha oficial del documento (no la de registro en el sistema)
     document_date      DATE         NOT NULL,
 
-    -- Remitente cifrado AES-256-GCM
-    sender             MEDIUMTEXT NOT NULL,
+    -- Remitente en claro: permite filtrar en SQL sin descifrar
+    sender             VARCHAR(160) NOT NULL,
 
     -- Tipo de documento: solo se aceptan estas tres categorías
     type               ENUM('oficio', 'memorandum', 'carta') NOT NULL,
@@ -119,6 +120,7 @@ CREATE TABLE IF NOT EXISTS documents (
     -- Índices para acelerar las búsquedas por estos campos frecuentes
     INDEX idx_documents_number  (number),
     INDEX idx_documents_subject (subject),
+    INDEX idx_documents_sender  (sender),
     INDEX idx_documents_date    (document_date),
     INDEX idx_documents_type    (type)
 ) ENGINE=InnoDB;
@@ -187,14 +189,17 @@ ON DUPLICATE KEY UPDATE email = VALUES(email);
 -- Esto limita el daño en caso de que la aplicación sea comprometida.
 -- =====================================================================
 
--- Crea el usuario 'archivo_app' si no existe todavía
+-- Crea el usuario 'archivo_app' si no existe todavía.
+-- SEGURIDAD: la contraseña real NO se escribe en este archivo.
+-- Reemplaza el marcador antes de ejecutar y guarda la contraseña
+-- únicamente en el archivo de secretos (/var/www/arcanum-secrets.php).
 CREATE USER IF NOT EXISTS 'archivo_app'@'localhost'
-    IDENTIFIED BY '2d069c72b3f4958de6542120ce82b25b';
+    IDENTIFIED BY 'CAMBIAR_POR_CONTRASENA_SEGURA';
 
 -- Le da permisos solo para las 4 operaciones básicas de datos
 -- sobre todas las tablas de esta base de datos
 GRANT SELECT, INSERT, UPDATE, DELETE
-    ON archivo_documental.*
+    ON arcanum.*
     TO 'archivo_app'@'localhost';
 
 -- Aplica los cambios de permisos de forma inmediata

@@ -1,0 +1,4 @@
+# Bloquea todo acceso directo por HTTP a los archivos de configuración.
+# Defensa en profundidad: aunque el front controller ya no expone esta
+# carpeta, esta regla la protege incluso si el rewrite fallara.
+Require all denied

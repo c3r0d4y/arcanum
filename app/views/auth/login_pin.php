@@ -1,9 +1,14 @@
 <?php
 /*
- * Vista de inicio de sesión — ARCANUM
- * Diseño de seguridad nacional: emblema oficial tipo sello, título dorado
- * metálico con shimmer, y aviso legal de acceso no autorizado.
+ * Vista: segundo factor de autenticación — verificación de PIN.
+ * Se muestra después de que la contraseña fue verificada correctamente.
+ * El PIN fallido cuenta como intento de login y puede bloquear la cuenta.
  */
+
+// Enmascara el correo: muestra solo los primeros 3 caracteres + *** + dominio
+$emailParts    = explode('@', $userEmail ?? '');
+$localMasked   = substr($emailParts[0], 0, 3) . str_repeat('*', max(2, strlen($emailParts[0]) - 3));
+$emailMasked   = $localMasked . '@' . ($emailParts[1] ?? '');
 ?>
 <div class="login-bg">
 
@@ -19,123 +24,138 @@
         <div class="login-corner bl"></div>
         <div class="login-corner br"></div>
 
-        <!-- ── Sección héroe: emblema + ARCANUM dorado dominante ── -->
+        <!-- ── Sección héroe: emblema + ARCANUM dorado ── -->
         <div class="login-hero">
 
-            <!-- Emblema oficial tipo sello de seguridad nacional -->
             <div class="login-seal-wrap">
                 <svg class="login-seal" viewBox="0 0 80 80" fill="none" aria-hidden="true">
-                    <!-- Anillo exterior dentado -->
                     <circle cx="40" cy="40" r="37" stroke="#b8935a" stroke-width="1"
                             stroke-dasharray="2.5 2" opacity=".65"/>
-                    <!-- Anillo interior sutil -->
                     <circle cx="40" cy="40" r="30" stroke="#b8935a" stroke-width=".6" opacity=".28"/>
-                    <!-- Escudo central tipo NSA/FBI -->
                     <path d="M40 11 L57 19 L57 37 C57 51 40 60 40 60 C40 60 23 51 23 37 L23 19 Z"
                           stroke="#b8935a" stroke-width="1.3" fill="rgba(184,147,90,.07)"/>
-                    <!-- División horizontal del escudo (separación jefe/campo) -->
-                    <line x1="23" y1="28" x2="57" y2="28" stroke="#b8935a"
-                          stroke-width=".7" opacity=".45"/>
-                    <!-- Mira de precisión: cruceta central -->
-                    <line x1="40" y1="11" x2="40" y2="60" stroke="#b8935a"
-                          stroke-width=".35" opacity=".2"/>
-                    <line x1="23" y1="36" x2="57" y2="36" stroke="#b8935a"
-                          stroke-width=".35" opacity=".2"/>
-                    <!-- Punto central del escudo -->
+                    <line x1="23" y1="28" x2="57" y2="28" stroke="#b8935a" stroke-width=".7" opacity=".45"/>
+                    <line x1="40" y1="11" x2="40" y2="60" stroke="#b8935a" stroke-width=".35" opacity=".2"/>
+                    <line x1="23" y1="36" x2="57" y2="36" stroke="#b8935a" stroke-width=".35" opacity=".2"/>
                     <circle cx="40" cy="37" r="1.8" fill="#b8935a" opacity=".75"/>
-                    <circle cx="40" cy="37" r="4.2" stroke="#b8935a"
-                            stroke-width=".5" fill="none" opacity=".32"/>
-                    <!-- Marcas cardinales en el anillo (N/S/E/O) -->
+                    <circle cx="40" cy="37" r="4.2" stroke="#b8935a" stroke-width=".5" fill="none" opacity=".32"/>
                     <line x1="40" y1="2"  x2="40" y2="7"  stroke="#b8935a" stroke-width="1.5" opacity=".75"/>
                     <line x1="40" y1="73" x2="40" y2="78" stroke="#b8935a" stroke-width="1.5" opacity=".75"/>
                     <line x1="2"  y1="40" x2="7"  y2="40" stroke="#b8935a" stroke-width="1.5" opacity=".75"/>
                     <line x1="73" y1="40" x2="78" y2="40" stroke="#b8935a" stroke-width="1.5" opacity=".75"/>
-                    <!-- Puntos en las diagonales del anillo -->
                     <circle cx="13.4" cy="13.4" r="1.3" fill="#b8935a" opacity=".4"/>
                     <circle cx="66.6" cy="13.4" r="1.3" fill="#b8935a" opacity=".4"/>
                     <circle cx="13.4" cy="66.6" r="1.3" fill="#b8935a" opacity=".4"/>
                     <circle cx="66.6" cy="66.6" r="1.3" fill="#b8935a" opacity=".4"/>
-                    <!-- Tres barras horizontales en la parte inferior del escudo (cuerpo) -->
                     <line x1="29" y1="42" x2="51" y2="42" stroke="#b8935a" stroke-width=".5" opacity=".3"/>
                     <line x1="29" y1="47" x2="51" y2="47" stroke="#b8935a" stroke-width=".5" opacity=".25"/>
                     <line x1="31" y1="52" x2="49" y2="52" stroke="#b8935a" stroke-width=".5" opacity=".2"/>
                 </svg>
             </div>
 
-            <!-- Banda de clasificación con separadores dorados -->
             <div class="login-hero-pre">Sistema Clasificado</div>
-
-            <!-- ARCANUM: gradiente dorado metálico, pieza central dominante -->
             <h1 class="login-brand-name">ARCANUM</h1>
-
-            <!-- Descripción oficial del sistema -->
             <p class="login-hero-sub">Sistema Cifrado de Expedientes Clasificados</p>
 
-            <!-- Etiquetas de atributos de seguridad -->
             <div class="login-hero-tags">
-                <span class="login-tag blue">AES-256-GCM</span>
-                <span class="login-tag gold">Acceso Restringido</span>
+                <span class="login-tag blue">PASO 2 DE 2</span>
+                <span class="login-tag gold">Verificación de PIN</span>
                 <span class="login-tag">C3r0d4y</span>
             </div>
         </div>
 
-        <!-- ── Tarjeta de autenticación ── -->
+        <!-- ── Tarjeta de verificación de PIN ── -->
         <div class="login-card-v2">
 
-            <!-- Encabezado: icono escudo + título -->
+            <!-- Cabecera -->
             <div class="login-card-v2-head">
-                <div class="login-shield">
+                <div class="login-shield" style="background:rgba(74,130,190,.18);border-color:rgba(74,130,190,.5);color:#4a82be">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        <rect x="3" y="11" width="18" height="11" rx="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                     </svg>
                 </div>
                 <div>
-                    <div class="login-card-title">Autenticación Requerida</div>
-                    <div class="login-card-subtitle">Actividad monitoreada y registrada</div>
+                    <div class="login-card-title">Verificación de PIN</div>
+                    <div class="login-card-subtitle">Segundo factor de autenticación requerido</div>
                 </div>
             </div>
 
-            <!-- Formulario de acceso -->
+            <!-- Cuerpo del formulario -->
             <div class="login-card-v2-body">
-                <form method="post" action="<?= e(url('login')) ?>" autocomplete="off">
+
+                <!-- Indicador del operador autenticado -->
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;
+                            background:rgba(74,130,190,.06);border:1px solid rgba(74,130,190,.2);
+                            margin-bottom:16px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                         stroke="rgba(74,130,190,.65)" stroke-width="2" stroke-linecap="round"
+                         style="flex-shrink:0">
+                        <circle cx="12" cy="8" r="4"/>
+                        <path d="M4 21a8 8 0 0 1 16 0"/>
+                    </svg>
+                    <div style="min-width:0">
+                        <div style="font:700 9px/1 ui-monospace,monospace;letter-spacing:.14em;
+                                    text-transform:uppercase;color:rgba(74,130,190,.5);margin-bottom:3px">
+                            Operador identificado
+                        </div>
+                        <div style="font:600 12px/1 ui-monospace,monospace;color:#a8c4e0;
+                                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                            <?= e($emailMasked) ?>
+                        </div>
+                    </div>
+                    <!-- Indicador de paso completado -->
+                    <div style="margin-left:auto;flex-shrink:0;display:flex;align-items:center;gap:5px">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+                             stroke="rgba(74,222,128,.6)" stroke-width="3" stroke-linecap="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        <span style="font:700 8px/1 ui-monospace,monospace;letter-spacing:.1em;
+                                     color:rgba(74,222,128,.55);text-transform:uppercase">Contraseña OK</span>
+                    </div>
+                </div>
+
+                <form method="post" action="<?= e(url('login/pin')) ?>" autocomplete="off">
                     <?= Csrf::field() ?>
 
-                    <!-- Identificador de acceso del operador -->
-                    <label>Identificador de acceso
-                        <input type="email"
-                               name="email"
-                               value="<?= e(old('email', 'admin@c3r0d4y.com')) ?>"
+                    <!-- PIN de seguridad — valor precargado para ambiente de desarrollo -->
+                    <label>PIN de seguridad
+                        <input type="password"
+                               name="pin"
+                               inputmode="numeric"
+                               maxlength="8"
+                               value="12345678"
                                required
                                autofocus
-                               autocomplete="username"
-                               placeholder="operador@dominio.com">
+                               autocomplete="off"
+                               placeholder="••••"
+                               style="letter-spacing:.35em;font-size:20px;text-align:center">
                     </label>
 
-                    <!-- Clave de acceso — valor precargado para ambiente de desarrollo -->
-                    <label>Clave de acceso
-                        <input type="password"
-                               name="password"
-                               value="admin123"
-                               required
-                               autocomplete="current-password"
-                               placeholder="••••••••">
-                    </label>
-
-                    <!-- Botón de autenticación -->
                     <button class="btn primary" type="submit">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            <rect x="3" y="11" width="18" height="11" rx="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
                         </svg>
-                        Autenticar
+                        Verificar PIN
                     </button>
                 </form>
+
+                <!-- Enlace para cancelar y volver al login -->
+                <div style="text-align:center;margin-top:14px">
+                    <a href="<?= e(url('login')) ?>"
+                       style="font:11px/1 ui-monospace,monospace;color:rgba(74,130,190,.4);
+                              text-decoration:none;letter-spacing:.05em"
+                       onclick="fetch('<?= e(url('login/cancel')) ?>',{method:'POST',headers:{'X-CSRF-Token':'<?= e(Csrf::token()) ?>'}}).catch(()=>{})">
+                        ← Cambiar usuario
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- ── Aviso legal de acceso no autorizado ── -->
+        <!-- Aviso de seguridad -->
         <div class="login-warning">
             <div class="login-warning-head">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
@@ -144,22 +164,18 @@
                     <line x1="12" y1="9" x2="12" y2="13"/>
                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
-                ADVERTENCIA — SISTEMA RESTRINGIDO
+                AUTENTICACIÓN EN DOS PASOS
             </div>
             <div class="login-warning-body">
-                <p>Este sistema informático es de uso <strong>EXCLUSIVO</strong> para personal
-                   debidamente autorizado por <strong>C3r0d4y Cyber Defense</strong>. El acceso,
-                   uso indebido o divulgación no autorizados constituyen una violación grave sujeta
-                   a sanciones penales y civiles conforme a la legislación vigente.</p>
-                <p><strong>TODA</strong> actividad realizada en este sistema es monitoreada,
-                   grabada y auditada en tiempo real. La evidencia obtenida podrá ser utilizada
-                   como prueba en procedimientos legales ante las autoridades competentes.</p>
-                <p class="login-warning-foot">Al autenticarse, declara estar debidamente
-                   autorizado y acepta las políticas de seguridad de C3r0d4y Cyber Defense.</p>
+                <p>El PIN de seguridad es el segundo factor de autenticación requerido para acceder
+                   al sistema. Cada intento fallido se registra y acumula con los intentos de contraseña.
+                   Tres intentos fallidos totales resultan en el <strong>bloqueo permanente</strong> de la cuenta.</p>
+                <p>Esta verificación expira en <strong>2 minutos</strong>.
+                   Si la sesión expira, deberás ingresar nuevamente tu contraseña.</p>
             </div>
         </div>
 
-        <!-- Pie del login -->
+        <!-- Pie -->
         <div class="login-footer-v2">
             <span>C3r0d4y &copy; <?= date('Y') ?></span>
             <span>Cifrado en reposo y en tránsito</span>
@@ -168,23 +184,20 @@
     </div><!-- /login-wrap -->
 </div><!-- /login-bg -->
 
-<!-- ══════════════════════════════════════════════════════════════
-     OVERLAY DE AMENAZA: intento de autenticación fallido
-     Cubre toda la pantalla en rojo, muestra el error y cuenta 10s.
-     ══════════════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════
+     OVERLAY DE AMENAZA: PIN incorrecto
+     Reutiliza el mismo componente del login de contraseña.
+     ══════════════════════════════════════════════════ -->
 <div id="login-threat-overlay"
-     role="alertdialog" aria-modal="true" aria-label="Acceso denegado"
+     role="alertdialog" aria-modal="true" aria-label="PIN incorrecto"
      style="display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center">
 
-    <!-- Fondo rojizo con pulso de amenaza -->
     <div id="threat-bg-pulse"
          style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(100,8,8,.78) 0%,rgba(55,2,2,.94) 100%)"></div>
 
-    <!-- Viñeta de escaneo táctica -->
     <div style="position:absolute;inset:0;pointer-events:none;
                 background:repeating-linear-gradient(0deg,rgba(255,30,30,.025) 0px,rgba(255,30,30,.025) 1px,transparent 1px,transparent 4px)"></div>
 
-    <!-- Tarjeta central del error -->
     <div id="threat-card"
          style="position:relative;z-index:1;width:calc(100% - 40px);max-width:420px;
                 background:rgba(6,2,2,.96);
@@ -192,7 +205,6 @@
                 box-shadow:0 0 0 1px rgba(180,20,20,.12),0 0 48px rgba(140,8,8,.55),0 0 100px rgba(90,2,2,.35);
                 display:flex;flex-direction:column;align-items:center">
 
-        <!-- Cabecera: ACCESO DENEGADO -->
         <div style="width:100%;display:flex;align-items:center;gap:10px;
                     padding:13px 18px;border-bottom:1px solid rgba(200,30,30,.3);
                     background:rgba(160,15,15,.14)">
@@ -204,28 +216,22 @@
             </svg>
             <span id="threat-header-label"
                   style="font:700 10px/1 ui-monospace,monospace;letter-spacing:.22em;color:#f87171;text-transform:uppercase">
-                Acceso Denegado — Sistema ARCANUM
+                PIN Incorrecto — Sistema ARCANUM
             </span>
         </div>
 
-        <!-- ── Indicador de intentos fallidos (se rellena con JS) ── -->
         <div id="threat-attempts-wrap"
              style="display:none;flex-direction:column;align-items:center;gap:10px;
                     padding:16px 20px 0;width:100%;border-bottom:1px solid rgba(200,30,30,.12)">
-
-            <!-- Tres puntos de intento -->
             <div style="display:flex;align-items:center;gap:14px">
                 <div id="threat-dot-1" class="threat-dot"></div>
                 <div id="threat-dot-2" class="threat-dot"></div>
                 <div id="threat-dot-3" class="threat-dot"></div>
             </div>
-
-            <!-- Etiqueta de estado del intento -->
             <div style="display:flex;align-items:center;gap:8px;padding-bottom:14px">
                 <span id="threat-attempt-label"
                       style="font:700 9px/1 ui-monospace,monospace;letter-spacing:.16em;
                              color:rgba(248,113,113,.55);text-transform:uppercase"></span>
-                <!-- Badge BLOQUEADA — solo visible en el 3er intento -->
                 <span id="threat-locked-badge"
                       style="display:none;font:700 8px/1 ui-monospace,monospace;letter-spacing:.14em;
                              color:#f87171;background:rgba(248,113,113,.14);
@@ -235,25 +241,20 @@
             </div>
         </div>
 
-        <!-- Mensaje de error del intento fallido -->
         <p id="threat-msg"
            style="margin:16px 22px 10px;font:600 12.5px/1.7 ui-monospace,monospace;
                   color:#f0a0a0;letter-spacing:.025em;text-align:center"></p>
 
-        <!-- Anillo SVG de cuenta regresiva -->
         <div style="position:relative;width:96px;height:96px;margin:6px 0">
             <svg width="96" height="96" viewBox="0 0 96 96"
                  style="display:block;transform:rotate(-90deg)">
-                <!-- Pista fija -->
                 <circle cx="48" cy="48" r="40" fill="none"
                         stroke="rgba(200,30,30,.18)" stroke-width="4.5"/>
-                <!-- Arco de progreso: circunferencia = 2π×40 ≈ 251.33 -->
                 <circle id="threat-ring" cx="48" cy="48" r="40" fill="none"
                         stroke="#f87171" stroke-width="4.5" stroke-linecap="butt"
                         stroke-dasharray="251.33" stroke-dashoffset="0"
                         style="transition:stroke-dashoffset .95s linear,stroke .6s ease"/>
             </svg>
-            <!-- Número central -->
             <div style="position:absolute;inset:0;display:flex;flex-direction:column;
                         align-items:center;justify-content:center;gap:2px">
                 <span id="threat-num"
@@ -262,40 +263,33 @@
             </div>
         </div>
 
-        <!-- Texto de estado debajo del anillo -->
         <p style="font:600 9px/1 ui-monospace,monospace;letter-spacing:.16em;
                   color:rgba(248,113,113,.38);text-transform:uppercase;margin:0 0 16px">
             Sistema se reactiva automáticamente
         </p>
 
-        <!-- Barra de progreso lineal en la base -->
         <div style="width:100%;height:2px;background:rgba(200,30,30,.14)">
-            <div id="threat-bar"
-                 style="height:100%;width:100%;background:rgba(248,113,113,.65)"></div>
+            <div id="threat-bar" style="height:100%;width:100%;background:rgba(248,113,113,.65)"></div>
         </div>
 
-    </div><!-- /threat-card -->
-</div><!-- /login-threat-overlay -->
+    </div>
+</div>
 
 <style>
-/* Animación de entrada de la tarjeta de amenaza */
 @keyframes threatCardIn {
     from { opacity:0; transform:scale(.92) translateY(-10px); }
     to   { opacity:1; transform:scale(1)   translateY(0);     }
 }
-/* Pulso del fondo rojizo */
 @keyframes threatBgPulse {
-    0%,100% { opacity:1;   }
+    0%,100% { opacity:1; }
     50%     { opacity:.82; }
 }
-/* Punto de intento fallido */
 .threat-dot {
     width:15px; height:15px; border-radius:50%;
     background:transparent;
     border:2px solid rgba(248,113,113,.18);
     transition:background .35s ease, border-color .35s ease, box-shadow .35s ease;
 }
-/* Animación de pulso del badge bloqueado */
 @keyframes lockedBadgePulse {
     0%,100% { opacity:1; }
     50%     { opacity:.55; }
@@ -305,30 +299,25 @@
 </style>
 
 <script>
-/* Overlay de bloqueo temporal por intento de login fallido */
+/* Overlay de bloqueo por PIN incorrecto — misma lógica que el login de contraseña */
 (function () {
-
-    /* Circunferencia del anillo (r=40): 2π×40 ≈ 251.33 */
     var CIRCUM = 251.33;
     var TOTAL  = 10;
 
-    var overlay       = document.getElementById('login-threat-overlay');
-    var numEl         = document.getElementById('threat-num');
-    var ringEl        = document.getElementById('threat-ring');
-    var barEl         = document.getElementById('threat-bar');
-    var msgEl         = document.getElementById('threat-msg');
-    var headerLbl     = document.getElementById('threat-header-label');
-    var attemptsWrap  = document.getElementById('threat-attempts-wrap');
-    var attemptLbl    = document.getElementById('threat-attempt-label');
-    var lockedBadge   = document.getElementById('threat-locked-badge');
+    var overlay      = document.getElementById('login-threat-overlay');
+    var numEl        = document.getElementById('threat-num');
+    var ringEl       = document.getElementById('threat-ring');
+    var barEl        = document.getElementById('threat-bar');
+    var msgEl        = document.getElementById('threat-msg');
+    var headerLbl    = document.getElementById('threat-header-label');
+    var attemptsWrap = document.getElementById('threat-attempts-wrap');
+    var attemptLbl   = document.getElementById('threat-attempt-label');
+    var lockedBadge  = document.getElementById('threat-locked-badge');
 
-    /* ── Llena los puntos indicadores de intento ── */
     function mostrarIntentos(actual, maximo, esBloqueada) {
         if (!attemptsWrap || actual < 1) return;
-
         attemptsWrap.style.display = 'flex';
 
-        /* Colores según si es el bloqueo definitivo o un intento parcial */
         var colorRelleno  = esBloqueada ? 'rgba(248,113,113,1)'   : 'rgba(248,113,113,.78)';
         var sombraRelleno = esBloqueada ? '0 0 10px rgba(248,113,113,.9)' : '0 0 7px rgba(248,113,113,.55)';
         var bordeRelleno  = esBloqueada ? 'rgba(248,113,113,1)'   : 'rgba(248,113,113,.85)';
@@ -337,19 +326,16 @@
             var dot = document.getElementById('threat-dot-' + i);
             if (!dot) continue;
             if (i <= actual) {
-                /* Punto ocupado (intento realizado) */
-                dot.style.background   = colorRelleno;
-                dot.style.borderColor  = bordeRelleno;
-                dot.style.boxShadow    = sombraRelleno;
+                dot.style.background  = colorRelleno;
+                dot.style.borderColor = bordeRelleno;
+                dot.style.boxShadow   = sombraRelleno;
             } else {
-                /* Punto vacío (intento aún disponible) */
-                dot.style.background   = 'transparent';
-                dot.style.borderColor  = 'rgba(248,113,113,.18)';
-                dot.style.boxShadow    = 'none';
+                dot.style.background  = 'transparent';
+                dot.style.borderColor = 'rgba(248,113,113,.18)';
+                dot.style.boxShadow   = 'none';
             }
         }
 
-        /* Etiqueta de estado */
         if (attemptLbl) {
             if (esBloqueada) {
                 attemptLbl.textContent = 'Intento ' + actual + ' de ' + maximo;
@@ -360,7 +346,6 @@
             }
         }
 
-        /* Badge y cabecera cuando la cuenta queda bloqueada */
         if (esBloqueada) {
             if (lockedBadge) {
                 lockedBadge.style.display   = 'inline-block';
@@ -372,26 +357,19 @@
         }
     }
 
-    /* ── Actualiza el anillo SVG y el número central ── */
     function actualizarAnillo(segundos) {
         if (!ringEl || !numEl) return;
         numEl.textContent = segundos;
-
-        /* El arco se consume de lleno (offset=0) a vacío (offset=CIRCUM) */
         var offset = CIRCUM * (1 - segundos / TOTAL);
         ringEl.style.strokeDashoffset = offset;
-
-        /* El color pasa de rojo vivo a rojo apagado conforme avanza */
-        var t     = segundos / TOTAL;
-        var r     = Math.round(248 * t + 60  * (1 - t));
-        var g     = Math.round(113 * t + 18  * (1 - t));
-        var b     = Math.round(113 * t + 18  * (1 - t));
-        var color = 'rgb(' + r + ',' + g + ',' + b + ')';
-        ringEl.style.stroke = color;
-        numEl.style.color   = color;
+        var t = segundos / TOTAL;
+        var r = Math.round(248 * t + 60  * (1 - t));
+        var g = Math.round(113 * t + 18  * (1 - t));
+        var b = Math.round(113 * t + 18  * (1 - t));
+        ringEl.style.stroke = 'rgb(' + r + ',' + g + ',' + b + ')';
+        numEl.style.color   = 'rgb(' + r + ',' + g + ',' + b + ')';
     }
 
-    /* ── Desmonta el overlay y rehabilita el formulario ── */
     function finalizar(form) {
         if (overlay) {
             overlay.style.transition = 'opacity .55s ease';
@@ -406,41 +384,35 @@
         if (form) {
             form.style.pointerEvents = '';
             form.style.opacity       = '';
+            /* Limpia el PIN para que el operador ingrese uno nuevo */
+            var pinInput = form.querySelector('input[name="pin"]');
+            if (pinInput) { pinInput.value = ''; pinInput.focus(); }
         }
     }
 
-    /* ── Lanza la cuenta regresiva ── */
     function iniciarConteo(rawMsg) {
         if (!overlay) return;
 
-        /* Parsea el prefijo "Intento X de Y — " para extraer el número de intento */
-        var prefijo = rawMsg.match(/^Intento (\d+) de (\d+) — /);
+        var prefijo       = rawMsg.match(/^Intento (\d+) de (\d+) — /);
         var intentoActual = prefijo ? parseInt(prefijo[1], 10) : 0;
         var intentoMax    = prefijo ? parseInt(prefijo[2], 10) : 3;
         var msg           = prefijo ? rawMsg.slice(prefijo[0].length) : rawMsg;
 
-        /* Detecta si la cuenta quedó bloqueada en este intento o ya lo estaba */
         var esBloqueada = intentoActual >= intentoMax
             || msg.toLowerCase().indexOf('bloqueada') !== -1
             || msg.toLowerCase().indexOf('bloqueado') !== -1
             || msg.toLowerCase().indexOf('suspendido') !== -1;
 
-        /* Si estaba bloqueada antes del intento actual (sin prefijo), muestra 3/3 */
         if (esBloqueada && intentoActual === 0) {
             intentoActual = intentoMax;
         }
 
-        /* Muestra el mensaje limpio (sin el prefijo de intento) */
         if (msgEl) msgEl.textContent = msg;
-
-        /* Muestra e inicializa los puntos de intento */
         mostrarIntentos(intentoActual, intentoMax, esBloqueada);
 
-        /* Muestra el overlay y bloquea el scroll */
         overlay.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        /* Desactiva el formulario visualmente */
         var form = document.querySelector('.login-card-v2-body form');
         if (form) {
             form.style.pointerEvents = 'none';
@@ -448,10 +420,8 @@
             form.style.transition    = 'opacity .3s';
         }
 
-        /* Estado inicial: 10 segundos */
         actualizarAnillo(TOTAL);
 
-        /* Barra de progreso lineal: de 100 % a 0 % en TOTAL segundos */
         if (barEl) {
             barEl.style.transition = '';
             barEl.style.width      = '100%';
@@ -463,31 +433,23 @@
             });
         }
 
-        /* Cuenta regresiva de 10 a 0 */
         var restantes = TOTAL;
         var timer = setInterval(function () {
             restantes--;
             actualizarAnillo(Math.max(0, restantes));
             if (restantes <= 0) {
                 clearInterval(timer);
-                /* Si la cuenta está bloqueada, no se reactiva el formulario */
                 finalizar(esBloqueada ? null : form);
             }
         }, 1000);
     }
 
-    /* ── Al cargar, detecta si hubo error de autenticación ── */
     document.addEventListener('DOMContentLoaded', function () {
         var alertEl = document.querySelector('main .alert.alert-error');
         if (!alertEl) return;
-
         var msg = alertEl.textContent.trim();
-
-        /* Oculta el alerta original; el overlay lo muestra procesado */
         alertEl.style.display = 'none';
-
         iniciarConteo(msg);
     });
-
 })();
 </script>

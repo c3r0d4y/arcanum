@@ -20,7 +20,9 @@
             <option value="operador" <?= $filters['role'] === 'operador' ? 'selected' : '' ?>>Operador</option>
         </select>
     </label>
-    <a class="btn muted" href="<?= e(url('logs')) ?>">Limpiar</a>
+    <div class="filters-actions">
+        <a class="btn muted" href="<?= e(url('logs')) ?>">Limpiar</a>
+    </div>
 </form>
 
 <div class="table-wrap">
@@ -38,14 +40,14 @@
         <tbody>
         <?php foreach ($logs as $log): ?>
             <tr>
-                <td style="font:11px/1 ui-monospace,monospace;color:var(--muted)"><?= e($log['created_at']) ?></td>
-                <td style="font-weight:600"><?= e($log['user_name'] ?? 'No autenticado') ?></td>
-                <td>
+                <td data-label="Fecha/Hora" style="font:11px/1 ui-monospace,monospace;color:var(--muted)"><?= e($log['created_at']) ?></td>
+                <td data-label="Operador" style="font-weight:600"><?= e($log['user_name'] ?? 'No autenticado') ?></td>
+                <td data-label="Nivel">
                     <?= $log['user_role']
                         ? '<span class="badge">' . e(ucfirst($log['user_role'])) . '</span>'
                         : '<span style="color:var(--sub);font:10px ui-monospace,monospace">—</span>' ?>
                 </td>
-                <td>
+                <td data-label="Acción">
                     <?php
                     $actionColor = match(true) {
                         str_contains($log['action'], 'login_failed') => 'var(--danger)',
@@ -59,8 +61,8 @@
                         <?= e($log['action']) ?>
                     </span>
                 </td>
-                <td style="font-size:13px"><?= e($log['description']) ?></td>
-                <td style="font:11px/1 ui-monospace,monospace;color:var(--sub)"><?= e($log['ip_address']) ?></td>
+                <td data-label="Descripción" style="font-size:13px"><?= e($log['description']) ?></td>
+                <td data-label="IP" style="font:11px/1 ui-monospace,monospace;color:var(--sub)"><?= e($log['ip_address']) ?></td>
             </tr>
         <?php endforeach; ?>
         <?php if (!$logs): ?>

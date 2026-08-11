@@ -4,33 +4,50 @@
  * Archivo: app/models/Document.php
  * Autor:   C3r0d4y
  *
- * Modelo de documento con cifrado AES-256-GCM en campos sensibles.
+ * Modelo de documento. El archivo PDF se guarda cifrado (AES-256-GCM),
+ * pero los metadatos de búsqueda viven en claro para que los filtros
+ * se resuelvan directamente en SQL sin descifrar nada.
  *
  * Campos cifrados en BD (prefijo "ENC:"):
- *   number, subject, sender, original_file_name
+ *   original_file_name
  *
- * Campos en claro (necesarios para índices y filtros SQL):
- *   type, document_date, file_name, file_size, created_by
+ * Campos en claro (necesarios para búsquedas y filtros SQL):
+ *   number, subject, sender, type, document_date, file_name,
+ *   file_size, created_by
  *
- * La búsqueda por campos cifrados se hace en PHP tras descifrar,
- * garantizando que la BD nunca exponga metadatos en claro.
+ * El PDF solo se descifra al visualizarlo completo o al editarlo;
+ * durante las búsquedas no se realiza ninguna operación de descifrado.
  */
 
 declare(strict_types=1);
 
 final class Document
 {
-    private array $types = ['oficio', 'memorandum', 'carta'];
-
+    // Lee los tipos activos desde la tabla de catálogo en vez del array estático
     public function types(): array
     {
-        return $this->types;
+        $stmt = Database::connection()->prepare(
+            'SELECT name FROM document_types WHERE active = 1 ORDER BY name ASC'
+        );
+        $stmt->execute();
+        return array_column($stmt->fetchAll(), 'name');
+    }
+
+    // Devuelve los remitentes autorizados activos desde el catálogo
+    public function senders(): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT name FROM document_senders WHERE active = 1 ORDER BY name ASC'
+        );
+        $stmt->execute();
+        return array_column($stmt->fetchAll(), 'name');
     }
 
     /*
-     * Busca documentos aplicando filtros. Los campos cifrados (number, subject)
-     * se filtran en PHP después de descifrar. Los campos en claro (type, date)
-     * se filtran en SQL para mayor eficiencia.
+     * Busca documentos aplicando filtros. Todos los campos de búsqueda
+     * (number, subject, type, date) están en claro, así que los filtros
+     * se resuelven completos en SQL sin descifrar nada: la búsqueda es
+     * mucho más rápida porque la base de datos hace todo el trabajo.
      */
     public function search(array $filters): array
     {
@@ -40,7 +57,16 @@ final class Document
                    WHERE 1=1';
         $params = [];
 
-        // Filtros SQL sobre campos no cifrados
+        // Coincidencia parcial sobre el folio (en claro)
+        if (($filters['number'] ?? '') !== '') {
+            $sql .= ' AND d.number LIKE :number';
+            $params['number'] = '%' . $filters['number'] . '%';
+        }
+        // Coincidencia parcial sobre el asunto (en claro)
+        if (($filters['subject'] ?? '') !== '') {
+            $sql .= ' AND d.subject LIKE :subject';
+            $params['subject'] = '%' . $filters['subject'] . '%';
+        }
         if (($filters['date'] ?? '') !== '') {
             $sql .= ' AND d.document_date = :date';
             $params['date'] = $filters['date'];
@@ -54,26 +80,9 @@ final class Document
 
         $stmt = Database::connection()->prepare($sql);
         $stmt->execute($params);
-        $rows = $stmt->fetchAll();
 
-        // Descifra y filtra en PHP los campos sensibles
-        $results = [];
-        foreach ($rows as $row) {
-            $row = $this->decrypt($row);
-
-            if (($filters['number'] ?? '') !== '' &&
-                stripos($row['number'], $filters['number']) === false) {
-                continue;
-            }
-            if (($filters['subject'] ?? '') !== '' &&
-                stripos($row['subject'], $filters['subject']) === false) {
-                continue;
-            }
-
-            $results[] = $row;
-        }
-
-        return $results;
+        // No se descifra nada en el listado: los metadatos ya están en claro
+        return $stmt->fetchAll();
     }
 
     // Busca un documento por ID y descifra sus campos
@@ -147,22 +156,26 @@ final class Document
             ->execute(['id' => $id]);
     }
 
-    // Cifra todos los campos sensibles de un documento
+    /*
+     * Cifra únicamente el nombre original del archivo.
+     * Los metadatos de búsqueda (number, subject, sender) se guardan
+     * en claro para que las búsquedas SQL sean rápidas.
+     */
     private function encrypt(array $data): array
     {
-        $data['number']             = Crypto::encryptField($data['number']);
-        $data['subject']            = Crypto::encryptField($data['subject']);
-        $data['sender']             = Crypto::encryptField($data['sender']);
-        $data['original_file_name'] = Crypto::encryptField($data['original_file_name']);
+        if (isset($data['original_file_name'])) {
+            $data['original_file_name'] = Crypto::encryptField($data['original_file_name']);
+        }
         return $data;
     }
 
-    // Descifra todos los campos sensibles de un documento leído de BD
+    /*
+     * Descifra únicamente el nombre original del archivo.
+     * Se usa solo al consultar un documento individual (ver o editar);
+     * el listado y las búsquedas nunca pasan por aquí.
+     */
     private function decrypt(array $row): array
     {
-        $row['number']             = Crypto::decryptField((string) ($row['number'] ?? ''));
-        $row['subject']            = Crypto::decryptField((string) ($row['subject'] ?? ''));
-        $row['sender']             = Crypto::decryptField((string) ($row['sender'] ?? ''));
         $row['original_file_name'] = Crypto::decryptField((string) ($row['original_file_name'] ?? ''));
         return $row;
     }

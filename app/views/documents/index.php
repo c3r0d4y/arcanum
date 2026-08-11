@@ -30,8 +30,10 @@
             <?php endforeach; ?>
         </select>
     </label>
-    <a class="btn muted" href="<?= e(url('documents')) ?>">Limpiar</a>
-    <a class="btn primary" href="<?= e(url('documents/create')) ?>">+ Nuevo</a>
+    <div class="filters-actions">
+        <a class="btn muted" href="<?= e(url('documents')) ?>">Limpiar</a>
+        <a class="btn primary" href="<?= e(url('documents/create')) ?>">+ Nuevo</a>
+    </div>
 </form>
 
 <div class="table-wrap">
@@ -49,11 +51,16 @@
         <tbody>
         <?php foreach ($documents as $document): ?>
             <tr>
-                <td style="font:600 12px/1 ui-monospace,monospace;color:var(--accent)"><?= e($document['number']) ?></td>
-                <td><?= e($document['subject']) ?></td>
-                <td style="font:12px/1 ui-monospace,monospace;color:var(--muted)"><?= e($document['document_date']) ?></td>
-                <td><?= e($document['sender']) ?></td>
-                <td><span class="badge"><?= e(ucfirst($document['type'])) ?></span></td>
+                <!--
+                    data-label repite el nombre de la columna en cada celda.
+                    En pantallas anchas no se ve; en teléfono el CSS lo usa
+                    para rotular el dato cuando la fila se convierte en ficha.
+                -->
+                <td data-label="Folio" style="font:600 12px/1 ui-monospace,monospace;color:var(--accent)"><?= e($document['number']) ?></td>
+                <td data-label="Asunto"><?= e($document['subject']) ?></td>
+                <td data-label="Fecha" style="font:12px/1 ui-monospace,monospace;color:var(--muted)"><?= e($document['document_date']) ?></td>
+                <td data-label="Remitente"><?= e($document['sender']) ?></td>
+                <td data-label="Tipo"><span class="badge"><?= e(ucfirst($document['type'])) ?></span></td>
                 <td class="actions">
                     <a class="btn soft"
                        href="<?= e(url('documents/' . $document['id'] . '/file')) ?>"
@@ -62,7 +69,8 @@
                        href="<?= e(url('documents/' . $document['id'] . '/edit')) ?>">Editar</a>
                     <form method="post"
                           action="<?= e(url('documents/' . $document['id'] . '/delete')) ?>"
-                          data-confirm="¿Eliminar este expediente y su archivo cifrado?">
+                          data-confirm="¿Eliminar este expediente y su archivo cifrado?"
+                          data-pin-required>
                         <?= Csrf::field() ?>
                         <button class="btn soft" type="submit" style="color:var(--danger);border-color:rgba(192,57,43,.25)">Eliminar</button>
                     </form>

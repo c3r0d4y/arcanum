@@ -46,6 +46,7 @@ final class DocumentsController extends Controller
             'title'        => 'Nuevo expediente',
             'document'     => null,
             'types'        => $this->documents->types(),
+            'senders'      => $this->documents->senders(),
             'action'       => url('documents/store'),
             'requiresFile' => true,
         ]);
@@ -55,6 +56,8 @@ final class DocumentsController extends Controller
     {
         Auth::requireLogin();
         Csrf::verify();
+        Auth::blockIfDefaultPin();
+        Auth::requirePin();
 
         $data = $this->validatedData();
         $file = $this->validatedPdf(true);
@@ -88,6 +91,7 @@ final class DocumentsController extends Controller
             'title'        => 'Editar expediente',
             'document'     => $document,
             'types'        => $this->documents->types(),
+            'senders'      => $this->documents->senders(),
             'action'       => url('documents/' . $id . '/update'),
             'requiresFile' => false,
         ]);
@@ -97,6 +101,8 @@ final class DocumentsController extends Controller
     {
         Auth::requireLogin();
         Csrf::verify();
+        Auth::blockIfDefaultPin();
+        Auth::requirePin();
 
         $document = $this->findOrFail($id);
         $data     = $this->validatedData();
@@ -130,6 +136,8 @@ final class DocumentsController extends Controller
     {
         Auth::requireLogin();
         Csrf::verify();
+        Auth::blockIfDefaultPin();
+        Auth::requirePin();
 
         $document = $this->findOrFail($id);
         $path     = STORAGE_PATH . '/' . $document['file_name'];
@@ -205,8 +213,22 @@ final class DocumentsController extends Controller
             return null;
         }
 
+        // Longitudes máximas de las columnas VARCHAR en la base de datos
+        if (mb_strlen($data['number']) > 120 ||
+            mb_strlen($data['subject']) > 255 ||
+            mb_strlen($data['sender']) > 160) {
+            flash('error', 'Folio, asunto o remitente exceden la longitud máxima permitida.');
+            return null;
+        }
+
         if (!in_array($data['type'], $this->documents->types(), true)) {
             flash('error', 'Tipo de documento inválido.');
+            return null;
+        }
+
+        $senders = $this->documents->senders();
+        if (!empty($senders) && !in_array($data['sender'], $senders, true)) {
+            flash('error', 'Remitente no autorizado.');
             return null;
         }
 
